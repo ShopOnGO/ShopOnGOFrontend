@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'widgets/sidebar.dart';
 import 'widgets/top_navbar.dart';
+import 'widgets/info_block.dart';
 
 void main() {
   runApp(const MyApp());
@@ -49,6 +50,21 @@ class MainPage extends StatelessWidget {
                   borderRadius: 20,
                   margin: const EdgeInsets.all(8.0),
                 ),
+              ),
+              body: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: InfoBlock(
+                      spacing: 16,
+                      leftCardHeight: 150,
+                      rightCardHeight: 150,
+                      leftCardColor: const Color.fromARGB(255, 61, 59, 59),
+                      rightCardColor: Colors.grey.shade300,
+                    ),
+                  ),
+                  Expanded(child: Container(color: Colors.white)),
+                ],
               ),
             ),
           ),
