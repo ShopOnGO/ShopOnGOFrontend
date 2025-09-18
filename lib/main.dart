@@ -1,75 +1,77 @@
 import 'package:flutter/material.dart';
-import 'widgets/sidebar.dart';
+import 'themes/app_theme.dart';
 import 'widgets/top_navbar.dart';
-import 'widgets/info_block.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool isDark = false;
+
+  void toggleTheme() {
+    setState(() {
+      isDark = !isDark;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
       debugShowCheckedModeBanner: false,
-      home: const MainPage(),
+      home: DashboardPage(toggleTheme: toggleTheme),
     );
   }
 }
 
-class MainPage extends StatelessWidget {
-  const MainPage({super.key});
+class DashboardPage extends StatefulWidget {
+  final VoidCallback toggleTheme;
+  const DashboardPage({super.key, required this.toggleTheme});
+
+  @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  int currentIndex = 0;
+
+  final pages = const [
+    Center(child: Text("Главная страница")),
+    Center(child: Text("Каталог")),
+    Center(child: Text("Личный кабинет")),
+    Center(child: Text("Корзина")),
+  ];
+
+  void onTabSelected(int index) {
+    setState(() {
+      currentIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Row(
-        children: [
-          Sidebar(
-            itemCount: 6,
-            width: 70,
-            backgroundColor: Colors.grey.shade200,
-            iconColor: Colors.grey.shade400,
-            spacing: 12,
-            radius: 15,
-          ),
-          Expanded(
-            child: Scaffold(
-              appBar: PreferredSize(
-                preferredSize: const Size.fromHeight(60),
-                child: TopNavbar(
-                  itemCount: 7,
-                  itemWidth: 100,
-                  overlap: 20,
-                  height: 40,
-                  color: Colors.grey.shade300,
-                  borderColor: const Color.fromARGB(255, 254, 247, 255),
-                  borderWidth: 7,
-                  borderRadius: 20,
-                  margin: const EdgeInsets.all(8.0),
-                ),
-              ),
-              body: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: InfoBlock(
-                      spacing: 16,
-                      leftCardHeight: 150,
-                      rightCardHeight: 150,
-                      leftCardColor: const Color.fromARGB(255, 61, 59, 59),
-                      rightCardColor: Colors.grey.shade300,
-                    ),
-                  ),
-                  Expanded(child: Container(color: Colors.white)),
-                ],
-              ),
-            ),
-          ),
-        ],
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: TopNavbar(
+          currentIndex: currentIndex,
+          onTabSelected: onTabSelected,
+          activeColor: Theme.of(context).colorScheme.primary,
+          color: Colors.grey.shade600,
+          borderColor: Theme.of(context).scaffoldBackgroundColor,
+        ),
       ),
+      body: pages[currentIndex],
     );
   }
 }
