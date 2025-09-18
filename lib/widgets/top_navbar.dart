@@ -20,12 +20,12 @@ class TopNavbar extends StatelessWidget {
     required this.onTabSelected,
     this.itemWidth = 200,
     this.overlap = 30,
-    this.height = 30,
+    this.height = 40,
     this.color = Colors.grey,
     this.activeColor = Colors.blue,
     this.borderColor = Colors.white,
-    this.borderWidth = 4,
-    this.borderRadius = 16,
+    this.borderWidth = 6,
+    this.borderRadius = 22,
     this.margin = EdgeInsets.zero,
   });
 
