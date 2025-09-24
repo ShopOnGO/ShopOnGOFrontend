@@ -18,7 +18,7 @@ class TopNavbar extends StatelessWidget {
     super.key,
     required this.currentIndex,
     required this.onTabSelected,
-    this.itemWidth = 200,
+    this.itemWidth = 250,
     this.overlap = 30,
     this.height = 40,
     this.color = Colors.grey,
@@ -35,6 +35,7 @@ class TopNavbar extends StatelessWidget {
       {"icon": Icons.home, "label": "Главная"},
       {"icon": Icons.list, "label": "Каталог"},
       {"icon": Icons.person, "label": "Личный кабинет"},
+      {"icon": Icons.star, "label": "Избранное"},
       {"icon": Icons.shopping_cart, "label": "Корзина"},
     ];
 

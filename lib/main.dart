@@ -6,6 +6,7 @@ import 'widgets/top_navbar.dart';
 import 'pages/main_page.dart';
 import 'pages/catalog_page.dart';
 import 'pages/profile_page.dart';
+import 'pages/liked.dart';
 import 'pages/cart_page.dart';
 
 void main() {
@@ -51,7 +52,7 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   int currentIndex = 0;
 
-  final pages = const [MainPage(), CatalogPage(), ProfilePage(), CartPage()];
+  final pages = const [MainPage(), CatalogPage(), ProfilePage(), LikedPage(), CartPage()];
 
   void onTabSelected(int index) {
     setState(() {
