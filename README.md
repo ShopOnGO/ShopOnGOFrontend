@@ -20,4 +20,5 @@
 ## ССылка на прототипы страниц
 [Прототипы страниц](https://miro.com/app/board/uXjVJD5shcU=/?share_link_id=444735887278)
 
-## 
+## Ссылка на api главного приложения backend
+http://localhost:8081
