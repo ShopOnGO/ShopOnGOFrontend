@@ -21,4 +21,4 @@
 [Прототипы страниц](https://miro.com/app/board/uXjVJD5shcU=/?share_link_id=444735887278)
 
 ## Ссылка на api главного приложения backend
-http://localhost:8081
+[Схема API сервера](https://drive.google.com/file/d/1057l-up2nKAML1gSnxQFe91tPad1152u/view?usp=drive_link)
