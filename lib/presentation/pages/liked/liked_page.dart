@@ -5,10 +5,10 @@ class LikedPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Text(
-        "Изранное",
-        style: TextStyle(fontSize: 22),
+        "Избранное",
+        style: Theme.of(context).textTheme.displaySmall,
       ),
     );
   }

@@ -5,10 +5,10 @@ class MainPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Text(
         "Главная страница",
-        style: TextStyle(fontSize: 22),
+        style: Theme.of(context).textTheme.displaySmall,
       ),
     );
   }

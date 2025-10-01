@@ -5,10 +5,10 @@ class CatalogPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Text(
         "Каталог",
-        style: TextStyle(fontSize: 22),
+        style: Theme.of(context).textTheme.displaySmall,
       ),
     );
   }

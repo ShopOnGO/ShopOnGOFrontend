@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../themes/app_colors.dart';
+import '../themes/app_text_styles.dart';
 
 class TopNavbar extends StatelessWidget {
   final int currentIndex;
@@ -21,9 +23,9 @@ class TopNavbar extends StatelessWidget {
     this.itemWidth = 250,
     this.overlap = 30,
     this.height = 40,
-    this.color = Colors.grey,
-    this.activeColor = Colors.blue,
-    this.borderColor = Colors.white,
+    required this.color,
+    required this.activeColor,
+    required this.borderColor,
     this.borderWidth = 6,
     this.borderRadius = 22,
     this.margin = EdgeInsets.zero,
@@ -75,23 +77,23 @@ class TopNavbar extends StatelessWidget {
           decoration: BoxDecoration(
             color: active ? activeColor : color,
             borderRadius: BorderRadius.circular(borderRadius),
-            border: Border.all(
-              color: borderColor,
-              width: borderWidth,
-            ),
+            border: Border.all(color: borderColor, width: borderWidth),
             boxShadow: active
-                ? [BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 3))]
+                ? [
+                    BoxShadow(
+                      color: AppColors.black26,
+                      blurRadius: 6,
+                      offset: const Offset(0, 3),
+                    ),
+                  ]
                 : [],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(item["icon"], color: Colors.white, size: 20),
+              Icon(item["icon"], color: AppColors.textLight, size: 20),
               const SizedBox(width: 6),
-              Text(
-                item["label"],
-                style: const TextStyle(color: Colors.white, fontSize: 14),
-              ),
+              Text(item["label"], style: AppTextStyles.topNavbarLabel),
             ],
           ),
         ),

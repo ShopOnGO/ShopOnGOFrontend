@@ -5,10 +5,10 @@ class CartPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Text(
         "Корзина",
-        style: TextStyle(fontSize: 22),
+        style: Theme.of(context).textTheme.displaySmall,
       ),
     );
   }
