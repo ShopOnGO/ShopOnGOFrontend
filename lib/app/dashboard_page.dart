@@ -45,17 +45,20 @@ class _DashboardPageState extends State<DashboardPage> {
                 children: [
                   Text(
                     "Tailornado",
-                    style: Theme.of(context,).textTheme.headlineLarge?.copyWith(),
+                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(),
                   ),
-                  const Spacer(),
-                  TopNavbar(
-                    currentIndex: currentIndex,
-                    onTabSelected: onTabSelected,
-                    activeColor: Theme.of(context).colorScheme.primary,
-                    color: Theme.of(context).colorScheme.secondaryContainer,
-                    borderColor: Theme.of(context).scaffoldBackgroundColor,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 5,
+                    child: TopNavbar(
+                      currentIndex: currentIndex,
+                      onTabSelected: onTabSelected,
+                      activeColor: Theme.of(context).colorScheme.primary,
+                      color: Theme.of(context).colorScheme.secondaryContainer,
+                      borderColor: Theme.of(context).scaffoldBackgroundColor,
+                    ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 16),
                   IconButton(
                     icon: const Icon(Icons.brightness_6),
                     onPressed: widget.toggleTheme,

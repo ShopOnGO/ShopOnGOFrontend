@@ -6,8 +6,6 @@ class TopNavbar extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTabSelected;
 
-  final double itemWidth;
-  final double overlap;
   final double height;
   final Color color;
   final Color activeColor;
@@ -20,8 +18,6 @@ class TopNavbar extends StatelessWidget {
     super.key,
     required this.currentIndex,
     required this.onTabSelected,
-    this.itemWidth = 250,
-    this.overlap = 30,
     this.height = 40,
     required this.color,
     required this.activeColor,
@@ -41,31 +37,55 @@ class TopNavbar extends StatelessWidget {
       {"icon": Icons.shopping_cart, "label": "Корзина"},
     ];
 
-    return Padding(
-      padding: margin,
-      child: SizedBox(
-        height: height,
-        child: Center(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double availableWidth = constraints.maxWidth - margin.horizontal;
+        double baseItemWidth = availableWidth / items.length;
+
+        final double minContentWidth = 30;
+        final double maxContentWidth = baseItemWidth;
+
+        double calculatedItemWidth;
+        double calculatedOverlap;
+
+        if (baseItemWidth < minContentWidth) {
+          calculatedItemWidth = minContentWidth;
+          calculatedOverlap = (items.length * calculatedItemWidth - availableWidth) / (items.length - 1);
+          if (calculatedOverlap < 0) calculatedOverlap = 0;
+        } else {
+          calculatedItemWidth = baseItemWidth * 1.1;
+          calculatedOverlap = baseItemWidth * 0.1;
+        }
+        calculatedItemWidth = calculatedItemWidth.clamp(minContentWidth, maxContentWidth);
+        double totalNavbarWidth = items.length * calculatedItemWidth - (items.length - 1) * calculatedOverlap;
+        totalNavbarWidth = totalNavbarWidth.clamp(0, availableWidth);
+        return Padding(
+          padding: margin,
           child: SizedBox(
-            width: items.length * itemWidth - (items.length - 1) * overlap,
             height: height,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                ...List.generate(items.length, (index) {
-                  if (index == currentIndex) return const SizedBox();
-                  return _buildTab(index, items[index], false);
-                }),
-                _buildTab(currentIndex, items[currentIndex], true),
-              ],
+            child: Center(
+              child: SizedBox(
+                width: totalNavbarWidth,
+                height: height,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    ...List.generate(items.length, (index) {
+                      if (index == currentIndex) return const SizedBox();
+                      return _buildTab(index, items[index], false, calculatedItemWidth, calculatedOverlap);
+                    }),
+                    _buildTab(currentIndex, items[currentIndex], true, calculatedItemWidth, calculatedOverlap),
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildTab(int index, Map<String, dynamic> item, bool active) {
+  Widget _buildTab(int index, Map<String, dynamic> item, bool active, double itemWidth, double overlap) {
     return Positioned(
       left: index * itemWidth - index * overlap,
       child: GestureDetector(
@@ -88,13 +108,25 @@ class TopNavbar extends StatelessWidget {
                   ]
                 : [],
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(item["icon"], color: AppColors.textLight, size: 20),
-              const SizedBox(width: 6),
-              Text(item["label"], style: AppTextStyles.topNavbarLabel),
-            ],
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(item["icon"], color: AppColors.textLight, size: 20),
+                  const SizedBox(width: 4),
+                  Text(
+                    item["label"],
+                    style: AppTextStyles.topNavbarLabel.copyWith(fontSize: 14),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
