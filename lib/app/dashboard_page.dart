@@ -16,22 +16,55 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   int currentIndex = 0;
-  final pages = const [
-    MainPage(),
-    CatalogPage(),
-    ProfilePage(),
-    LikedPage(),
-    CartPage(),
-  ];
+  final TextEditingController _searchController = TextEditingController();
 
-  void onTabSelected(int index) {
+  static const int catalogPageIndex = 1;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onTabSelected(int index) {
     setState(() {
       currentIndex = index;
     });
   }
 
+  void _onSearchChanged(String query) {
+    print("Dashboard: Search query changed to: $query");
+  }
+
+  void _onSearchSubmitted() {
+    print("Dashboard: Search submitted for: ${_searchController.text}");
+    _onTabSelected(catalogPageIndex);
+  }
+
+  void _onClearSearch() {
+    print("Dashboard: Search cleared.");
+  }
+
   @override
   Widget build(BuildContext context) {
+    final pages = [
+      MainPage(
+        searchController: _searchController,
+        onSearchChanged: _onSearchChanged,
+        onSearchSubmitted: _onSearchSubmitted,
+        onClearSearch: _onClearSearch,
+      ),
+      CatalogPage(
+        searchController: _searchController,
+        onSearchChanged: _onSearchChanged,
+        onSearchSubmitted: _onSearchSubmitted,
+        onClearSearch: _onClearSearch,
+      ),
+      const ProfilePage(),
+      const LikedPage(),
+      const CartPage(),
+    ];
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(80),
@@ -45,14 +78,16 @@ class _DashboardPageState extends State<DashboardPage> {
                 children: [
                   Text(
                     "Tailornado",
-                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.headlineLarge?.copyWith(),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     flex: 5,
                     child: TopNavbar(
                       currentIndex: currentIndex,
-                      onTabSelected: onTabSelected,
+                      onTabSelected: _onTabSelected,
                       activeColor: Theme.of(context).colorScheme.primary,
                       color: Theme.of(context).colorScheme.secondaryContainer,
                       borderColor: Theme.of(context).scaffoldBackgroundColor,
