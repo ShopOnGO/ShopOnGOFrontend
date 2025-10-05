@@ -98,7 +98,7 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
               style: AppTextStyles.topNavbarLabel.copyWith(
                 color: AppColors.textLight,
               ),
-              cursorColor: AppColors.textLight,
+              cursorColor: AppColors.primary,
               decoration: InputDecoration(
                 hintText: widget.hintText,
                 hintStyle: AppTextStyles.topNavbarLabel.copyWith(

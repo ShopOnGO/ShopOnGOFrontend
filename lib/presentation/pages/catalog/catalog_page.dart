@@ -21,7 +21,7 @@ class CatalogPage extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.fromLTRB(45, 0, 45, 30),
           child: CustomSearchBar(
             controller: searchController,
             hintText: "Искать в каталоге...",
