@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/product_grid.dart';
 import '../../widgets/search_bar.dart';
 
 class CatalogPage extends StatelessWidget {
@@ -35,27 +36,8 @@ class CatalogPage extends StatelessWidget {
             borderRadius: 22,
           ),
         ),
-        Expanded(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "Каталог",
-                  style: Theme.of(context).textTheme.displaySmall,
-                ),
-                if (searchController.text.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      "Результаты для: ${searchController.text}",
-                      style: Theme.of(context).textTheme.titleMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-              ],
-            ),
-          ),
+        const Expanded(
+          child: ProductGrid(maxCrossAxisExtent: 280),
         ),
       ],
     );

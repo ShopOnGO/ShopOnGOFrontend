@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/product_grid.dart';
 import '../../widgets/search_bar.dart';
 
 class MainPage extends StatelessWidget {
@@ -35,18 +36,8 @@ class MainPage extends StatelessWidget {
             borderRadius: 22,
           ),
         ),
-        Expanded(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "Главная страница",
-                  style: Theme.of(context).textTheme.displaySmall,
-                ),
-              ],
-            ),
-          ),
+        const Expanded(
+          child: ProductGrid(),
         ),
       ],
     );

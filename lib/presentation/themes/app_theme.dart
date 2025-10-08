@@ -42,6 +42,11 @@ class AppTheme {
       labelSmall: AppTextStyles.caption.copyWith(color: AppColors.textGrey),
     ),
     iconTheme: const IconThemeData(color: AppColors.lightIcon),
+    cardTheme: CardThemeData(
+      elevation: 4,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    ),
   );
 
   static ThemeData darkTheme = ThemeData(
@@ -87,5 +92,10 @@ class AppTheme {
       labelSmall: AppTextStyles.caption.copyWith(color: AppColors.darkIcon),
     ),
     iconTheme: const IconThemeData(color: AppColors.darkIcon),
+    cardTheme: CardThemeData(
+      elevation: 6,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    ),
   );
 }
