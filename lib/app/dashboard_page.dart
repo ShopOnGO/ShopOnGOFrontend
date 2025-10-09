@@ -1,8 +1,12 @@
+// ignore_for_file: avoid_print
+
 import 'package:flutter/material.dart';
+import '../data/models/product.dart';
 import '../presentation/pages/cart/cart_page.dart';
 import '../presentation/pages/catalog/catalog_page.dart';
 import '../presentation/pages/liked/liked_page.dart';
 import '../presentation/pages/main/main_page.dart';
+import '../presentation/pages/product_detail/product_detail_page.dart';
 import '../presentation/pages/profile/profile_page.dart';
 import '../presentation/widgets/top_navbar.dart';
 
@@ -17,9 +21,9 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   int currentIndex = 0;
   final TextEditingController _searchController = TextEditingController();
+  Product? _selectedProduct;
 
   static const int catalogPageIndex = 1;
-
   @override
   void dispose() {
     _searchController.dispose();
@@ -29,6 +33,18 @@ class _DashboardPageState extends State<DashboardPage> {
   void _onTabSelected(int index) {
     setState(() {
       currentIndex = index;
+    });
+  }
+
+  void _selectProduct(Product product) {
+    setState(() {
+      _selectedProduct = product;
+    });
+  }
+
+  void _closeProductDetail() {
+    setState(() {
+      _selectedProduct = null;
     });
   }
 
@@ -50,12 +66,14 @@ class _DashboardPageState extends State<DashboardPage> {
     final pages = [
       MainPage(
         searchController: _searchController,
+        onProductSelected: _selectProduct,
         onSearchChanged: _onSearchChanged,
         onSearchSubmitted: _onSearchSubmitted,
         onClearSearch: _onClearSearch,
       ),
       CatalogPage(
         searchController: _searchController,
+        onProductSelected: _selectProduct,
         onSearchChanged: _onSearchChanged,
         onSearchSubmitted: _onSearchSubmitted,
         onClearSearch: _onClearSearch,
@@ -69,7 +87,6 @@ class _DashboardPageState extends State<DashboardPage> {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(80),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Padding(
@@ -78,9 +95,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 children: [
                   Text(
                     "Tailornado",
-                    style: Theme.of(
-                      context,
-                    ).textTheme.headlineLarge?.copyWith(),
+                    style: Theme.of(context).textTheme.headlineLarge,
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -104,7 +119,30 @@ class _DashboardPageState extends State<DashboardPage> {
           ],
         ),
       ),
-      body: pages[currentIndex],
+      body: Stack(
+        children: [
+          pages[currentIndex],
+          IgnorePointer(
+            ignoring: _selectedProduct == null,
+            child: AnimatedOpacity(
+              opacity: _selectedProduct != null ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+              child: AnimatedScale(
+                scale: _selectedProduct != null ? 1.0 : 0.9,
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOutCubic,
+                child: _selectedProduct != null
+                    ? ProductDetailPage(
+                        product: _selectedProduct!,
+                        onClose: _closeProductDetail,
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

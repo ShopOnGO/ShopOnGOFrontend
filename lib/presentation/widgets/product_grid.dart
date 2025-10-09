@@ -5,8 +5,13 @@ import 'product_card.dart';
 
 class ProductGrid extends StatefulWidget {
   final double maxCrossAxisExtent;
+  final Function(Product) onProductSelected;
 
-  const ProductGrid({super.key, this.maxCrossAxisExtent = 300});
+  const ProductGrid({
+    super.key,
+    this.maxCrossAxisExtent = 300,
+    required this.onProductSelected,
+  });
 
   @override
   State<ProductGrid> createState() => _ProductGridState();
@@ -36,7 +41,6 @@ class _ProductGridState extends State<ProductGrid> {
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const Center(child: Text('Товары не найдены'));
         }
-
         final products = snapshot.data!;
         return GridView.builder(
           padding: const EdgeInsets.all(24),
@@ -48,7 +52,10 @@ class _ProductGridState extends State<ProductGrid> {
           ),
           itemCount: products.length,
           itemBuilder: (context, index) {
-            return ProductCard(product: products[index]);
+            return ProductCard(
+              product: products[index],
+              onProductSelected: widget.onProductSelected,
+            );
           },
         );
       },
