@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../widgets/filter_panel.dart';
 import '../../widgets/product_grid.dart';
 import '../../widgets/search_bar.dart';
 
-class CatalogPage extends StatelessWidget {
+class CatalogPage extends StatefulWidget {
   final TextEditingController searchController;
   final ValueChanged<String>? onSearchChanged;
   final VoidCallback? onSearchSubmitted;
@@ -17,27 +18,96 @@ class CatalogPage extends StatelessWidget {
   });
 
   @override
+  State<CatalogPage> createState() => _CatalogPageState();
+}
+
+class _CatalogPageState extends State<CatalogPage>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<Offset> _slideAnimation;
+  bool _isFilterPanelVisible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0.0, -1.0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _toggleFilterPanel() {
+    setState(() {
+      _isFilterPanelVisible = !_isFilterPanelVisible;
+      if (_isFilterPanelVisible) {
+        _animationController.forward();
+      } else {
+        _animationController.reverse();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    const double searchBarHeight = 50.0;
+    const double topMargin = 30.0;
+
+    return Stack(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(45, 0, 45, 30),
-          child: CustomSearchBar(
-            controller: searchController,
-            hintText: "Искать в каталоге...",
-            onSearchChanged: onSearchChanged,
-            onSearchSubmitted: onSearchSubmitted,
-            onClear: onClearSearch,
-            height: 50,
-            color: Theme.of(context).colorScheme.secondaryContainer,
-            borderColor: Theme.of(context).scaffoldBackgroundColor,
-            borderWidth: 6,
-            borderRadius: 22,
+        GestureDetector(
+          onTap: _isFilterPanelVisible ? _toggleFilterPanel : null,
+          child: Padding(
+            padding: const EdgeInsets.only(top: searchBarHeight + topMargin),
+            child: const ProductGrid(maxCrossAxisExtent: 280),
           ),
         ),
-        const Expanded(
-          child: ProductGrid(maxCrossAxisExtent: 280),
+        
+        Positioned(
+          top: (topMargin / 2) + (searchBarHeight - 22),
+          left: 45,
+          right: 45,
+          child: ClipRect(
+            child: FadeTransition(
+              opacity: _animationController,
+              child: SlideTransition(
+                position: _slideAnimation,
+                child: FilterPanel(
+                  onApply: widget.onSearchSubmitted,
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        Positioned(
+          top: topMargin / 2,
+          left: 45,
+          right: 45,
+          child: CustomSearchBar(
+            controller: widget.searchController,
+            hintText: "Искать в каталоге...",
+            onSearchChanged: widget.onSearchChanged,
+            onSearchSubmitted: widget.onSearchSubmitted,
+            onClear: widget.onClearSearch,
+            onFilterTap: _toggleFilterPanel,
+            height: searchBarHeight,
+            color: Theme.of(context).colorScheme.secondaryContainer,
+            borderColor: Theme.of(context).scaffoldBackgroundColor,
+          ),
         ),
       ],
     );

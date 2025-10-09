@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import '../themes/app_colors.dart';
 import '../themes/app_text_styles.dart';
 
-class CustomSearchBar extends StatefulWidget {
+class CustomSearchBar extends StatelessWidget {
   final TextEditingController controller;
   final String hintText;
   final ValueChanged<String>? onSearchChanged;
   final VoidCallback? onSearchSubmitted;
   final VoidCallback? onClear;
+  final VoidCallback? onFilterTap;
   final double height;
   final Color color;
   final Color borderColor;
@@ -22,7 +23,8 @@ class CustomSearchBar extends StatefulWidget {
     this.onSearchChanged,
     this.onSearchSubmitted,
     this.onClear,
-    this.height = 120,
+    this.onFilterTap,
+    this.height = 50,
     required this.color,
     required this.borderColor,
     this.borderWidth = 6,
@@ -31,60 +33,19 @@ class CustomSearchBar extends StatefulWidget {
   });
 
   @override
-  State<CustomSearchBar> createState() => _CustomSearchBarState();
-}
-
-class _CustomSearchBarState extends State<CustomSearchBar> {
-  bool _showClearButton = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _showClearButton = widget.controller.text.isNotEmpty;
-    widget.controller.addListener(_onTextChanged);
-  }
-
-  @override
-  void dispose() {
-    widget.controller.removeListener(_onTextChanged);
-    super.dispose();
-  }
-
-  void _onTextChanged() {
-    final bool newShowClearButton = widget.controller.text.isNotEmpty;
-    if (_showClearButton != newShowClearButton) {
-      setState(() {
-        _showClearButton = newShowClearButton;
-      });
-    }
-    widget.onSearchChanged?.call(widget.controller.text);
-  }
-
-  void _performSearchSubmit() {
-    FocusScope.of(context).unfocus();
-    widget.onSearchSubmitted?.call();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final double innerBorderRadius =
-        widget.borderRadius - (widget.borderWidth / 2);
-
     return Container(
-      height: widget.height,
+      height: height,
       decoration: BoxDecoration(
-        color: widget.color,
-        borderRadius: BorderRadius.circular(widget.borderRadius),
-        border: Border.all(
-          color: widget.borderColor,
-          width: widget.borderWidth,
-        ),
-        boxShadow: widget.hasShadow
+        color: color,
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(color: borderColor, width: borderWidth),
+        boxShadow: hasShadow
             ? [
-                BoxShadow(
+                const BoxShadow(
                   color: AppColors.black26,
                   blurRadius: 6,
-                  offset: const Offset(0, 3),
+                  offset: Offset(0, 3),
                 ),
               ]
             : [],
@@ -93,16 +54,18 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
         children: [
           Expanded(
             child: TextField(
-              controller: widget.controller,
-              onSubmitted: (_) => _performSearchSubmit(),
+              controller: controller,
+              onSubmitted: (_) => onSearchSubmitted?.call(),
               style: AppTextStyles.topNavbarLabel.copyWith(
-                color: AppColors.textLight,
+                color: Theme.of(context).colorScheme.onSecondaryContainer,
               ),
               cursorColor: AppColors.primary,
               decoration: InputDecoration(
-                hintText: widget.hintText,
+                hintText: hintText,
                 hintStyle: AppTextStyles.topNavbarLabel.copyWith(
-                  color: AppColors.textLight.withValues(alpha: 0.7),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSecondaryContainer.withValues(alpha: 0.7),
                 ),
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(
@@ -112,48 +75,24 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
                 prefixIcon: IconButton(
                   icon: Icon(
                     Icons.search,
-                    color: AppColors.textLight,
+                    color: Theme.of(context).colorScheme.onSecondaryContainer,
                     size: 24,
                   ),
-                  onPressed: _performSearchSubmit,
+                  onPressed: onSearchSubmitted,
                 ),
-                suffixIcon: _showClearButton
-                    ? IconButton(
-                        icon: Icon(
-                          Icons.clear,
-                          color: AppColors.textLight.withValues(alpha: 0.7),
-                        ),
-                        onPressed: () {
-                          widget.controller.clear();
-                          widget.onClear?.call();
-                        },
-                      )
-                    : null,
               ),
             ),
           ),
-          Container(
-            width: widget.height * 2.6,
-            height: widget.height,
-            decoration: BoxDecoration(
-              color: widget.borderColor,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(innerBorderRadius),
-                bottomLeft: Radius.circular(innerBorderRadius),
-              ),
-              border: Border(
-                top: BorderSide(
-                  color: widget.borderColor,
-                  width: widget.borderWidth,
-                ),
-                bottom: BorderSide(
-                  color: widget.borderColor,
-                  width: widget.borderWidth,
-                ),
-                left: BorderSide(
-                  color: widget.borderColor,
-                  width: widget.borderWidth,
-                ),
+          SizedBox(
+            width: height * 1.5,
+            height: height,
+            child: Material(
+              color: borderColor,
+              borderRadius: BorderRadius.circular(borderRadius - borderWidth),
+              child: InkWell(
+                onTap: onFilterTap,
+                borderRadius: BorderRadius.circular(borderRadius - borderWidth),
+                child: Icon(Icons.filter_list_rounded, color: color, size: 28),
               ),
             ),
           ),

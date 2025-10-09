@@ -1,5 +1,3 @@
-// ignore_for_file: avoid_print
-
 import 'package:flutter/material.dart';
 import '../presentation/pages/cart/cart_page.dart';
 import '../presentation/pages/catalog/catalog_page.dart';

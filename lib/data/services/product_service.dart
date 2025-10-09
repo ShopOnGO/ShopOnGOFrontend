@@ -6,7 +6,7 @@ import '../models/product_variant.dart';
 
 class ProductService {
   Future<List<Product>> fetchProducts() async {
-    await Future.delayed(const Duration(milliseconds: 1200));
+    await Future.delayed(const Duration(milliseconds: 100));
     return _generateMockProducts(20);
   }
 
