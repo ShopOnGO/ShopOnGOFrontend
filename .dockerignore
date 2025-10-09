@@ -1,0 +1,15 @@
+# Git
+.git
+.gitignore
+
+Dockerfile
+.dockerignore
+
+.idea
+.vscode
+
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache
