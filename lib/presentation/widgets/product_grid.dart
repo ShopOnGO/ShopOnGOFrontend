@@ -6,11 +6,15 @@ import 'product_card.dart';
 class ProductGrid extends StatefulWidget {
   final double maxCrossAxisExtent;
   final Function(Product) onProductSelected;
+  final bool isScrollable;
+  final EdgeInsets padding;
 
   const ProductGrid({
     super.key,
     this.maxCrossAxisExtent = 300,
     required this.onProductSelected,
+    this.isScrollable = true,
+    this.padding = const EdgeInsets.all(24),
   });
 
   @override
@@ -42,8 +46,14 @@ class _ProductGridState extends State<ProductGrid> {
           return const Center(child: Text('Товары не найдены'));
         }
         final products = snapshot.data!;
+
         return GridView.builder(
-          padding: const EdgeInsets.all(24),
+          padding: widget.padding,
+          shrinkWrap: !widget.isScrollable,
+          physics: widget.isScrollable
+              ? const AlwaysScrollableScrollPhysics()
+              : const NeverScrollableScrollPhysics(),
+
           gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
             maxCrossAxisExtent: widget.maxCrossAxisExtent,
             childAspectRatio: 0.75,

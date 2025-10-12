@@ -78,7 +78,7 @@ class _DashboardPageState extends State<DashboardPage> {
         onSearchSubmitted: _onSearchSubmitted,
         onClearSearch: _onClearSearch,
       ),
-      const ProfilePage(),
+      ProfilePage(onProductSelected: _selectProduct),
       const LikedPage(),
       const CartPage(),
     ];
