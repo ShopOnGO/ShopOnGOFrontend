@@ -53,8 +53,30 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   void _onSearchSubmitted() {
-    print("Dashboard: Search submitted for: ${_searchController.text}");
-    _onTabSelected(catalogPageIndex);
+    final query = _searchController.text.trim();
+    print("Dashboard: Search submitted for: $query");
+
+    if (query.length < 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          content: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.white),
+              SizedBox(width: 8),
+              Text('Поисковый запрос должен содержать минимум 3 символа'),
+            ],
+          ),
+        ),
+      );
+    } else {
+      _onTabSelected(catalogPageIndex);
+    }
   }
 
   void _onClearSearch() {

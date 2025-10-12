@@ -1,9 +1,47 @@
 import 'package:flutter/material.dart';
 
-class OrderSummaryCard extends StatelessWidget {
+class OrderSummaryCard extends StatefulWidget {
   final double totalAmount;
 
   const OrderSummaryCard({super.key, required this.totalAmount});
+
+  @override
+  State<OrderSummaryCard> createState() => _OrderSummaryCardState();
+}
+
+class _OrderSummaryCardState extends State<OrderSummaryCard> {
+  final _textController = TextEditingController();
+  String? _errorMessage;
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
+
+  void _validateAndSubmit() {
+    if (_textController.text.trim().isEmpty) {
+      setState(() {
+        _errorMessage = 'Пожалуйста, заполните это поле';
+      });
+    } else {
+      setState(() {
+        _errorMessage = null;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Заказ успешно оформлен'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +71,7 @@ class OrderSummaryCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
                 child: Center(
                   child: Text(
-                    "ИТОГ: ${totalAmount.toStringAsFixed(0)} BYN",
+                    "ИТОГ: ${widget.totalAmount.toStringAsFixed(0)} BYN",
                     style: textTheme.headlineSmall,
                   ),
                 ),
@@ -42,13 +80,14 @@ class OrderSummaryCard extends StatelessWidget {
               SizedBox(
                 height: 120,
                 child: TextField(
+                  controller: _textController,
                   maxLines: null,
                   expands: true,
                   textAlignVertical: TextAlignVertical.top,
                   decoration: InputDecoration(
                     hintText: "Уточнения...",
                     hintStyle: TextStyle(
-                      color: theme.colorScheme.onSurface,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                     filled: true,
                     fillColor: theme.cardColor,
@@ -59,11 +98,47 @@ class OrderSummaryCard extends StatelessWidget {
                   ),
                 ),
               ),
+
+              const SizedBox(height: 8),
+              AnimatedOpacity(
+                opacity: _errorMessage != null ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.error,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        color: theme.colorScheme.onError,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _errorMessage ?? '',
+                          style: TextStyle(
+                            color: theme.colorScheme.onError,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () {},
+                onPressed: _validateAndSubmit,
                 style: ElevatedButton.styleFrom(
-                  elevation: 12,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   backgroundColor: theme.colorScheme.primary,
                   foregroundColor: theme.colorScheme.onPrimary,
