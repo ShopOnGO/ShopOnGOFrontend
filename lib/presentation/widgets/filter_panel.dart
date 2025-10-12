@@ -39,6 +39,7 @@ class _FilterPanelState extends State<FilterPanel> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const SizedBox(height: 12),
             Text('Цена', style: textTheme.titleMedium?.copyWith(color: colorScheme.onSecondaryContainer)),
             RangeSlider(
               values: _currentRangeValues,

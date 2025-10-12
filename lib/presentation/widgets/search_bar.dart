@@ -57,15 +57,13 @@ class CustomSearchBar extends StatelessWidget {
               controller: controller,
               onSubmitted: (_) => onSearchSubmitted?.call(),
               style: AppTextStyles.topNavbarLabel.copyWith(
-                color: Theme.of(context).colorScheme.onSecondaryContainer,
+                color: AppColors.textLight,
               ),
               cursorColor: AppColors.primary,
               decoration: InputDecoration(
                 hintText: hintText,
                 hintStyle: AppTextStyles.topNavbarLabel.copyWith(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSecondaryContainer.withValues(alpha: 0.7),
+                  color: AppColors.textLight.withValues(alpha: 0.7),
                 ),
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(
@@ -75,7 +73,7 @@ class CustomSearchBar extends StatelessWidget {
                 prefixIcon: IconButton(
                   icon: Icon(
                     Icons.search,
-                    color: Theme.of(context).colorScheme.onSecondaryContainer,
+                    color: AppColors.textLight,
                     size: 24,
                   ),
                   onPressed: onSearchSubmitted,
