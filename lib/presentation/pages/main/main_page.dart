@@ -80,19 +80,14 @@ class _MainPageState extends State<MainPage>
                   child: FilterPanel(onApply: _applyFilterAndClose),
                 ),
               ),
-
               CustomSearchBar(
                 controller: widget.searchController,
-                hintText: "Искать товары...",
                 onSearchChanged: widget.onSearchChanged,
                 onSearchSubmitted: widget.onSearchSubmitted,
                 onClear: widget.onClearSearch,
                 onFilterTap: _toggleFilterPanel,
-                height: searchBarHeight,
-                color: Theme.of(context).colorScheme.secondaryContainer,
-                borderColor: Theme.of(context).scaffoldBackgroundColor,
-                borderWidth: 6,
               ),
+              // -------------------------
             ],
           ),
         ),

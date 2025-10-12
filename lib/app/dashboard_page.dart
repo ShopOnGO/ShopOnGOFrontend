@@ -103,9 +103,6 @@ class _DashboardPageState extends State<DashboardPage> {
                     child: TopNavbar(
                       currentIndex: currentIndex,
                       onTabSelected: _onTabSelected,
-                      activeColor: Theme.of(context).colorScheme.primary,
-                      color: Theme.of(context).colorScheme.secondaryContainer,
-                      borderColor: Theme.of(context).scaffoldBackgroundColor,
                     ),
                   ),
                   const SizedBox(width: 16),

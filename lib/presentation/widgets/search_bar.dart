@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import '../themes/app_colors.dart';
-import '../themes/app_text_styles.dart';
 
 class CustomSearchBar extends StatelessWidget {
   final TextEditingController controller;
@@ -10,8 +8,6 @@ class CustomSearchBar extends StatelessWidget {
   final VoidCallback? onClear;
   final VoidCallback? onFilterTap;
   final double height;
-  final Color color;
-  final Color borderColor;
   final double borderWidth;
   final double borderRadius;
   final bool hasShadow;
@@ -25,8 +21,6 @@ class CustomSearchBar extends StatelessWidget {
     this.onClear,
     this.onFilterTap,
     this.height = 50,
-    required this.color,
-    required this.borderColor,
     this.borderWidth = 6,
     this.borderRadius = 22,
     this.hasShadow = true,
@@ -34,37 +28,55 @@ class CustomSearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final inputTheme = theme.inputDecorationTheme;
+
+    final Color containerColor = colorScheme.secondaryContainer;
+    final Color borderColor = theme.scaffoldBackgroundColor;
+    final Color iconColor = colorScheme.onSecondaryContainer;
+
+    final ShapeBorder buttonVisualShape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.horizontal(
+        left: Radius.circular(borderRadius - borderWidth),
+      ),
+    );
+
+    final ShapeBorder splashEffectShape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(borderRadius - borderWidth),
+    );
+
     return Container(
       height: height,
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: color,
+        color: containerColor,
         borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(color: borderColor, width: borderWidth),
         boxShadow: hasShadow
             ? [
-                const BoxShadow(
-                  color: AppColors.black26,
+                BoxShadow(
+                  color: theme.shadowColor,
                   blurRadius: 6,
-                  offset: Offset(0, 3),
+                  offset: const Offset(0, 3),
                 ),
               ]
             : [],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
             child: TextField(
               controller: controller,
               onSubmitted: (_) => onSearchSubmitted?.call(),
-              style: AppTextStyles.topNavbarLabel.copyWith(
-                color: AppColors.textLight,
-              ),
-              cursorColor: AppColors.primary,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: iconColor,
+                  ),
+              cursorColor: colorScheme.primary,
               decoration: InputDecoration(
                 hintText: hintText,
-                hintStyle: AppTextStyles.topNavbarLabel.copyWith(
-                  color: AppColors.textLight.withValues(alpha: 0.7),
-                ),
+                hintStyle: inputTheme.hintStyle,
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -73,7 +85,7 @@ class CustomSearchBar extends StatelessWidget {
                 prefixIcon: IconButton(
                   icon: Icon(
                     Icons.search,
-                    color: AppColors.textLight,
+                    color: iconColor,
                     size: 24,
                   ),
                   onPressed: onSearchSubmitted,
@@ -83,14 +95,14 @@ class CustomSearchBar extends StatelessWidget {
           ),
           SizedBox(
             width: height * 1.5,
-            height: height,
             child: Material(
               color: borderColor,
-              borderRadius: BorderRadius.circular(borderRadius - borderWidth),
+              shape: buttonVisualShape,
+              clipBehavior: Clip.antiAlias,
               child: InkWell(
+                customBorder: splashEffectShape,
                 onTap: onFilterTap,
-                borderRadius: BorderRadius.circular(borderRadius - borderWidth),
-                child: Icon(Icons.filter_list_rounded, color: color, size: 28),
+                child: Icon(Icons.filter_list_rounded, color: containerColor, size: 28),
               ),
             ),
           ),

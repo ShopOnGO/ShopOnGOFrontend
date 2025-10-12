@@ -25,11 +25,11 @@ class _FilterPanelState extends State<FilterPanel> {
       decoration: BoxDecoration(
         color: colorScheme.secondaryContainer,
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(22)),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x29000000),
+            color: theme.shadowColor,
             blurRadius: 8,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -47,7 +47,6 @@ class _FilterPanelState extends State<FilterPanel> {
               max: 500,
               divisions: 25,
               activeColor: colorScheme.primary,
-              inactiveColor: colorScheme.onSecondaryContainer.withValues(alpha: 0.3),
               labels: RangeLabels('${_currentRangeValues.start.round()} BYN', '${_currentRangeValues.end.round()} BYN'),
               onChanged: (RangeValues values) {
                 setState(() {

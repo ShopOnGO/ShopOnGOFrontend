@@ -53,8 +53,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           onPressed: widget.onClose,
         ),
         title: Text(widget.product.name),
-        elevation: 1,
-        shadowColor: Colors.black.withValues(alpha: 0.1),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -142,7 +140,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                 color: color,
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: Colors.grey.shade300,
+                                  color: theme.dividerColor,
                                   width: color == const Color(0xFFF5F5F5)
                                       ? 1.5
                                       : 0,
@@ -159,7 +157,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   Text(
                     widget.product.description.isNotEmpty
                         ? widget.product.description
-                        : 'Подробное описание для этого товара скоро появится.',
+                        : 'описание.',
                     style: textTheme.bodyLarge?.copyWith(height: 1.5),
                   ),
                 ],
@@ -176,7 +174,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           color: theme.scaffoldBackgroundColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: theme.dividerColor,
               blurRadius: 10,
               offset: const Offset(0, -5),
             ),

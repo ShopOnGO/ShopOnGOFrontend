@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
-import '../themes/app_colors.dart';
-import '../themes/app_text_styles.dart';
 
 class TopNavbar extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTabSelected;
 
   final double height;
-  final Color color;
-  final Color activeColor;
-  final Color borderColor;
   final double borderWidth;
   final double borderRadius;
   final EdgeInsets margin;
@@ -19,9 +14,6 @@ class TopNavbar extends StatelessWidget {
     required this.currentIndex,
     required this.onTabSelected,
     this.height = 40,
-    required this.color,
-    required this.activeColor,
-    required this.borderColor,
     this.borderWidth = 6,
     this.borderRadius = 22,
     this.margin = EdgeInsets.zero,
@@ -29,6 +21,14 @@ class TopNavbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
+    final Color activeColor = colorScheme.primary;
+    final Color inactiveColor = colorScheme.secondaryContainer;
+    final Color borderColor = theme.scaffoldBackgroundColor;
+    final Color iconAndTextColor = colorScheme.onSecondaryContainer;
+    
     final items = [
       {"icon": Icons.home, "label": "Главная"},
       {"icon": Icons.list, "label": "Каталог"},
@@ -72,9 +72,29 @@ class TopNavbar extends StatelessWidget {
                   children: [
                     ...List.generate(items.length, (index) {
                       if (index == currentIndex) return const SizedBox();
-                      return _buildTab(index, items[index], false, calculatedItemWidth, calculatedOverlap);
+                      return _buildTab(
+                        context, 
+                        index, 
+                        items[index], 
+                        false, 
+                        calculatedItemWidth, 
+                        calculatedOverlap,
+                        inactiveColor,
+                        borderColor,
+                        iconAndTextColor,
+                      );
                     }),
-                    _buildTab(currentIndex, items[currentIndex], true, calculatedItemWidth, calculatedOverlap),
+                    _buildTab(
+                      context,
+                      currentIndex, 
+                      items[currentIndex], 
+                      true, 
+                      calculatedItemWidth, 
+                      calculatedOverlap,
+                      activeColor,
+                      borderColor,
+                      iconAndTextColor,
+                    ),
                   ],
                 ),
               ),
@@ -85,7 +105,18 @@ class TopNavbar extends StatelessWidget {
     );
   }
 
-  Widget _buildTab(int index, Map<String, dynamic> item, bool active, double itemWidth, double overlap) {
+  Widget _buildTab(
+    BuildContext context,
+    int index, Map<String, dynamic> item, 
+    bool active, 
+    double itemWidth, 
+    double overlap,
+    Color backgroundColor,
+    Color borderColor,
+    Color contentColor,
+  ) {
+    final theme = Theme.of(context);
+    
     return Positioned(
       left: index * itemWidth - index * overlap,
       child: GestureDetector(
@@ -95,18 +126,18 @@ class TopNavbar extends StatelessWidget {
           height: height,
           width: itemWidth,
           decoration: BoxDecoration(
-            color: active ? activeColor : color,
+            color: backgroundColor,
             borderRadius: BorderRadius.circular(borderRadius),
             border: Border.all(color: borderColor, width: borderWidth),
-            boxShadow: active
+            /*boxShadow: active
                 ? [
                     BoxShadow(
-                      color: AppColors.black26,
+                      color: theme.shadowColor,
                       blurRadius: 6,
                       offset: const Offset(0, 3),
                     ),
                   ]
-                : [],
+                : [],*/
           ),
           child: FittedBox(
             fit: BoxFit.scaleDown,
@@ -116,11 +147,11 @@ class TopNavbar extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(item["icon"], color: AppColors.textLight, size: 20),
+                  Icon(item["icon"], color: contentColor, size: 20),
                   const SizedBox(width: 4),
                   Text(
                     item["label"],
-                    style: AppTextStyles.topNavbarLabel.copyWith(fontSize: 14),
+                    style: theme.textTheme.bodySmall?.copyWith(color: contentColor, fontWeight: FontWeight.w600),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

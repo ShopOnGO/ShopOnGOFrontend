@@ -87,7 +87,7 @@ class _ProductCardState extends State<ProductCard> {
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.3),
+                      color: theme.shadowColor,
                       blurRadius: 5,
                       offset: const Offset(0, 2),
                     ),
