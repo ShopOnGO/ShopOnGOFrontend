@@ -22,7 +22,7 @@ jobs:
   push:
     runs-on: ubuntu-latest
     needs: build
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/lead'
     permissions:
       contents: read
       packages: write
