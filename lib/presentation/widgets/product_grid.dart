@@ -8,6 +8,7 @@ class ProductGrid extends StatefulWidget {
   final Function(Product) onProductSelected;
   final bool isScrollable;
   final EdgeInsets padding;
+  final List<Product>? products;
 
   const ProductGrid({
     super.key,
@@ -15,6 +16,7 @@ class ProductGrid extends StatefulWidget {
     required this.onProductSelected,
     this.isScrollable = true,
     this.padding = const EdgeInsets.all(24),
+    this.products,
   });
 
   @override
@@ -28,47 +30,55 @@ class _ProductGridState extends State<ProductGrid> {
   @override
   void initState() {
     super.initState();
-    _productsFuture = _productService.fetchProducts();
+    if (widget.products == null) {
+      _productsFuture = _productService.fetchProducts();
+    }
+  }
+
+  Widget _buildGrid(List<Product> products) {
+    return GridView.builder(
+      padding: widget.padding,
+      shrinkWrap: !widget.isScrollable,
+      physics: widget.isScrollable
+          ? const AlwaysScrollableScrollPhysics()
+          : const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: widget.maxCrossAxisExtent,
+        childAspectRatio: 0.75,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+      ),
+      itemCount: products.length,
+      itemBuilder: (context, index) {
+        return ProductCard(
+          product: products[index],
+          onProductSelected: widget.onProductSelected,
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<Product>>(
-      future: _productsFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return Center(child: Text('Ошибка загрузки: ${snapshot.error}'));
-        }
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('Товары не найдены'));
-        }
-        final products = snapshot.data!;
-
-        return GridView.builder(
-          padding: widget.padding,
-          shrinkWrap: !widget.isScrollable,
-          physics: widget.isScrollable
-              ? const AlwaysScrollableScrollPhysics()
-              : const NeverScrollableScrollPhysics(),
-
-          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: widget.maxCrossAxisExtent,
-            childAspectRatio: 0.75,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-          ),
-          itemCount: products.length,
-          itemBuilder: (context, index) {
-            return ProductCard(
-              product: products[index],
-              onProductSelected: widget.onProductSelected,
-            );
-          },
-        );
-      },
-    );
+    if (widget.products != null) {
+      return _buildGrid(widget.products!);
+    } else {
+      return FutureBuilder<List<Product>>(
+        future: _productsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('Ошибка загрузки: ${snapshot.error}'));
+          }
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('Товары не найдены'));
+          }
+          final products = snapshot.data!;
+          return _buildGrid(products);
+        },
+      );
+    }
   }
 }

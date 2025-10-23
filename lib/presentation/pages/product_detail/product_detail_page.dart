@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../data/models/product.dart';
 import 'package:provider/provider.dart';
 import '../../../data/providers/cart_provider.dart';
+import '../../../data/providers/view_history_provider.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final Product product;
@@ -19,6 +20,17 @@ class ProductDetailPage extends StatefulWidget {
 
 class _ProductDetailPageState extends State<ProductDetailPage> {
   int _selectedVariantIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<ViewHistoryProvider>(
+        context,
+        listen: false,
+      ).addToHistory(widget.product);
+    });
+  }
 
   Color _getColorFromString(String colorName) {
     switch (colorName.toLowerCase()) {
