@@ -30,27 +30,8 @@ class UserInfoCard extends StatelessWidget {
             const ProfileActionButton(text: "Настройки"),
             ProfileActionButton(
               text: "Ваши устройства",
-              trailing: _buildProBadge(context),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProBadge(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primary,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        "Pro",
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: theme.colorScheme.onPrimary,
-          fontWeight: FontWeight.bold,
         ),
       ),
     );

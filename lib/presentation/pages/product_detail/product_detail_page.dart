@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/product.dart';
+import 'package:provider/provider.dart';
+import '../../../data/providers/cart_provider.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final Product product;
@@ -185,6 +187,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         ),
         child: ElevatedButton(
           onPressed: () {
+            final cart = context.read<CartProvider>();
+            cart.addToCart(widget.product, selectedVariant);
+
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(

@@ -102,7 +102,7 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
       ProfilePage(onProductSelected: _selectProduct),
       const LikedPage(),
-      const CartPage(),
+      CartPage(onProductSelected: _selectProduct),
     ];
 
     return Scaffold(
