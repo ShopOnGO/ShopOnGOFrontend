@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../data/models/product.dart';
 import 'package:provider/provider.dart';
 import '../../../data/providers/cart_provider.dart';
+import '../../../data/providers/liked_provider.dart';
 import '../../../data/providers/view_history_provider.dart';
 
 class ProductDetailPage extends StatefulWidget {
@@ -30,6 +31,13 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         listen: false,
       ).addToHistory(widget.product);
     });
+  }
+
+  bool _isCurrentVariantLiked() {
+    return context.read<LikedProvider>().isInLiked(
+      widget.product,
+      widget.product.variants[_selectedVariantIndex],
+    );
   }
 
   Color _getColorFromString(String colorName) {
@@ -197,29 +205,68 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             top: BorderSide(color: theme.dividerColor, width: 0.5),
           ),
         ),
-        child: ElevatedButton(
-          onPressed: () {
-            final cart = context.read<CartProvider>();
-            cart.addToCart(widget.product, selectedVariant);
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                final likedProvider = context.read<LikedProvider>();
 
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  '${widget.product.name} (${selectedVariant.colors}) добавлен в корзину!',
+                if (_isCurrentVariantLiked()) {
+                  likedProvider.removeFromLiked(
+                    '${widget.product.id}_${selectedVariant.id}',
+                  );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Удалено из избранного')),
+                  );
+                } else {
+                  likedProvider.addToLiked(widget.product, selectedVariant);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Добавлено в избранное!')),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+                textStyle: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
-                duration: const Duration(seconds: 2),
               ),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            backgroundColor: theme.colorScheme.primary,
-            foregroundColor: theme.colorScheme.onPrimary,
-            textStyle: textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
+              child: Text(
+                _isCurrentVariantLiked()
+                    ? 'Удалить из избранного'
+                    : 'Добавить в избранное',
+              ),
             ),
-          ),
-          child: const Text('Добавить в корзину'),
+            const SizedBox(height: 12),
+
+            ElevatedButton(
+              onPressed: () {
+                final cart = context.read<CartProvider>();
+                cart.addToCart(widget.product, selectedVariant);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      '${widget.product.name} (${selectedVariant.colors}) добавлен в корзину!',
+                    ),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
+                textStyle: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              child: const Text('Добавить в корзину'),
+            ),
+          ],
         ),
       ),
     );
