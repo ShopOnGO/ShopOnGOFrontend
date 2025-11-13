@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../../data/models/cart_item.dart';
 import '../../../../data/models/product.dart';
 import '../../../../data/providers/cart_provider.dart';
+import '../../../../data/providers/liked_provider.dart';
 
 class CartItemCard extends StatelessWidget {
   final CartItem cartItem;
@@ -25,6 +26,9 @@ class CartItemCard extends StatelessWidget {
     final imageUrl = variant.imageURLs.isNotEmpty
         ? variant.imageURLs.first
         : null;
+
+    final likedProvider = context.watch<LikedProvider>();
+    final isLiked = likedProvider.isInLiked(product, variant);
 
     return InkWell(
       onTap: () => onProductSelected(product),
@@ -53,7 +57,6 @@ class CartItemCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 16),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,8 +79,24 @@ class CartItemCard extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         IconButton(
-                          onPressed: () {},
-                          icon: const Icon(Icons.favorite_border),
+                          onPressed: () {
+                            final likedProvider = context.read<LikedProvider>();
+                            if (isLiked) {
+                              likedProvider.removeFromLiked(
+                                '${product.id}_${variant.id}',
+                              );
+                            } else {
+                              likedProvider.addToLiked(product, variant);
+                            }
+                          },
+                          icon: Icon(
+                            isLiked
+                                ? Icons.star_rounded
+                                : Icons.star_border_rounded,
+                            color: isLiked
+                                ? Colors.amber[600]
+                                : theme.colorScheme.outline,
+                          ),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
                         ),
@@ -94,7 +113,6 @@ class CartItemCard extends StatelessWidget {
                   ],
                 ),
               ),
-
               Container(
                 decoration: BoxDecoration(
                   color: theme.scaffoldBackgroundColor,

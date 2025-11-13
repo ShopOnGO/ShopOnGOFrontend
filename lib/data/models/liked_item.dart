@@ -5,12 +5,10 @@ class LikedItem {
   final String id;
   final Product product;
   final ProductVariant selectedVariant;
-  int quantity;
 
   LikedItem({
     required this.id,
     required this.product,
     required this.selectedVariant,
-    this.quantity = 1,
   });
 }

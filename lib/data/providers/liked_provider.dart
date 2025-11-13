@@ -12,71 +12,20 @@ class LikedProvider with ChangeNotifier {
 
   bool isInLiked(Product product, ProductVariant variant) {
     final likedId = '${product.id}_${variant.id}';
-    if (_items.containsKey(likedId)) {
-      return true;
-    } else {
-      return false;
-    }
+    return _items.containsKey(likedId);
   }
 
   void addToLiked(Product product, ProductVariant variant) {
     final likedId = '${product.id}_${variant.id}';
 
     if (_items.containsKey(likedId)) {
-      _items.update(
-        likedId,
-        (existingLikedItem) => LikedItem(
-          id: existingLikedItem.id,
-          product: existingLikedItem.product,
-          selectedVariant: existingLikedItem.selectedVariant,
-          quantity: existingLikedItem.quantity + 1,
-        ),
-      );
-    } else {
-      _items.putIfAbsent(
-        likedId,
-        () => LikedItem(
-          id: likedId,
-          product: product,
-          selectedVariant: variant,
-          quantity: 1,
-        ),
-      );
+      return;
     }
-    notifyListeners();
-  }
 
-  void incrementQuantity(String likedId) {
-    if (_items.containsKey(likedId)) {
-      _items.update(
-        likedId,
-        (item) => LikedItem(
-          id: item.id,
-          product: item.product,
-          selectedVariant: item.selectedVariant,
-          quantity: item.quantity + 1,
-        ),
-      );
-      notifyListeners();
-    }
-  }
-
-  void decrementQuantity(String likedId) {
-    if (!_items.containsKey(likedId)) return;
-
-    if (_items[likedId]!.quantity > 1) {
-      _items.update(
-        likedId,
-        (item) => LikedItem(
-          id: item.id,
-          product: item.product,
-          selectedVariant: item.selectedVariant,
-          quantity: item.quantity - 1,
-        ),
-      );
-    } else {
-      _items.remove(likedId);
-    }
+    _items.putIfAbsent(
+      likedId,
+      () => LikedItem(id: likedId, product: product, selectedVariant: variant),
+    );
     notifyListeners();
   }
 
@@ -93,7 +42,7 @@ class LikedProvider with ChangeNotifier {
   double get totalAmount {
     var total = 0.0;
     _items.forEach((key, likedItem) {
-      total += likedItem.selectedVariant.price * likedItem.quantity;
+      total += likedItem.selectedVariant.price;
     });
     return total;
   }

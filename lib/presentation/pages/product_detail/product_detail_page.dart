@@ -33,13 +33,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     });
   }
 
-  bool _isCurrentVariantLiked() {
-    return context.read<LikedProvider>().isInLiked(
-      widget.product,
-      widget.product.variants[_selectedVariantIndex],
-    );
-  }
-
   Color _getColorFromString(String colorName) {
     switch (colorName.toLowerCase()) {
       case 'черный':
@@ -67,6 +60,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     final imageUrl = selectedVariant.imageURLs.isNotEmpty
         ? selectedVariant.imageURLs.first
         : null;
+
+    final likedProvider = context.watch<LikedProvider>();
+    final isLiked = likedProvider.isInLiked(widget.product, selectedVariant);
 
     return Scaffold(
       appBar: AppBar(
@@ -179,7 +175,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   Text(
                     widget.product.description.isNotEmpty
                         ? widget.product.description
-                        : 'описание.',
+                        : 'Описание отсутствует.',
                     style: textTheme.bodyLarge?.copyWith(height: 1.5),
                   ),
                 ],
@@ -194,77 +190,73 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         ).copyWith(bottom: MediaQuery.of(context).padding.bottom + 16),
         decoration: BoxDecoration(
           color: theme.scaffoldBackgroundColor,
-          boxShadow: [
-            BoxShadow(
-              color: theme.dividerColor,
-              blurRadius: 10,
-              offset: const Offset(0, -5),
-            ),
-          ],
           border: Border(
             top: BorderSide(color: theme.dividerColor, width: 0.5),
           ),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        child: Row(
           children: [
-            ElevatedButton(
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {
+                  final cart = context.read<CartProvider>();
+                  cart.addToCart(widget.product, selectedVariant);
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        '${widget.product.name} (${selectedVariant.colors}) добавлен в корзину!',
+                      ),
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  textStyle: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                child: const Text('Добавить в корзину'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            IconButton(
               onPressed: () {
                 final likedProvider = context.read<LikedProvider>();
-
-                if (_isCurrentVariantLiked()) {
+                if (isLiked) {
                   likedProvider.removeFromLiked(
                     '${widget.product.id}_${selectedVariant.id}',
                   );
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Удалено из избранного')),
-                  );
                 } else {
                   likedProvider.addToLiked(widget.product, selectedVariant);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Добавлено в избранное!')),
-                  );
                 }
-              },
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: Colors.redAccent,
-                foregroundColor: Colors.white,
-                textStyle: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              child: Text(
-                _isCurrentVariantLiked()
-                    ? 'Удалить из избранного'
-                    : 'Добавить в избранное',
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            ElevatedButton(
-              onPressed: () {
-                final cart = context.read<CartProvider>();
-                cart.addToCart(widget.product, selectedVariant);
 
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                      '${widget.product.name} (${selectedVariant.colors}) добавлен в корзину!',
+                      isLiked
+                          ? 'Удалено из избранного'
+                          : 'Добавлено в избранное!',
                     ),
                     duration: const Duration(seconds: 2),
                   ),
                 );
               },
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: theme.colorScheme.onPrimary,
-                textStyle: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+              icon: Icon(
+                isLiked ? Icons.star_rounded : Icons.star_border_rounded,
+              ),
+              iconSize: 32,
+              color: isLiked ? Colors.amber[600] : theme.colorScheme.outline,
+              style: IconButton.styleFrom(
+                backgroundColor: theme.colorScheme.surfaceContainer,
+                padding: const EdgeInsets.all(12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('Добавить в корзину'),
             ),
           ],
         ),
