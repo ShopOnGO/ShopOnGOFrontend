@@ -3,6 +3,7 @@ import 'app/app.dart';
 import 'package:provider/provider.dart';
 import 'data/providers/cart_provider.dart';
 import 'data/providers/view_history_provider.dart';
+import 'data/providers/chat_provider.dart'; 
 import 'data/providers/liked_provider.dart';
 
 void main() {
@@ -12,6 +13,7 @@ void main() {
         ChangeNotifierProvider(create: (context) => CartProvider()),
         ChangeNotifierProvider(create: (context) => ViewHistoryProvider()),
         ChangeNotifierProvider(create: (context) => LikedProvider()),
+        ChangeNotifierProvider(create: (context) => ChatProvider()),
       ],
       child: const App(),
     ),

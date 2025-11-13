@@ -9,6 +9,7 @@ import '../presentation/pages/main/main_page.dart';
 import '../presentation/pages/product_detail/product_detail_page.dart';
 import '../presentation/pages/profile/profile_page.dart';
 import '../presentation/widgets/top_navbar.dart';
+import '../presentation/pages/chat/chat_overlay.dart';
 
 class DashboardPage extends StatefulWidget {
   final VoidCallback toggleTheme;
@@ -22,6 +23,7 @@ class _DashboardPageState extends State<DashboardPage> {
   int currentIndex = 0;
   final TextEditingController _searchController = TextEditingController();
   Product? _selectedProduct;
+  bool _isChatOpen = false;
 
   static const int catalogPageIndex = 1;
   @override
@@ -45,6 +47,12 @@ class _DashboardPageState extends State<DashboardPage> {
   void _closeProductDetail() {
     setState(() {
       _selectedProduct = null;
+    });
+  }
+
+  void _toggleChat() {
+    setState(() {
+      _isChatOpen = !_isChatOpen;
     });
   }
 
@@ -163,6 +171,23 @@ class _DashboardPageState extends State<DashboardPage> {
                         onClose: _closeProductDetail,
                       )
                     : const SizedBox.shrink(),
+              ),
+            ),
+          ),
+
+          // Positioned теперь является прямым потомком Stack
+          Positioned(
+            right: 24.0,
+            bottom: 24.0,
+            child: IgnorePointer(
+              ignoring: _selectedProduct != null,
+              child: AnimatedOpacity(
+                opacity: _selectedProduct != null ? 0.0 : 1.0,
+                duration: const Duration(milliseconds: 300),
+                child: ChatOverlay(
+                  isChatOpen: _isChatOpen,
+                  toggleChat: _toggleChat,
+                ),
               ),
             ),
           ),
