@@ -1,26 +1,17 @@
+// ignore_for_file: avoid_print
+
 import 'package:flutter/material.dart';
-import '../../../data/models/product.dart';
 import 'package:provider/provider.dart';
+import '../../../data/models/product.dart';
 import '../../../data/providers/liked_provider.dart';
 import '../../widgets/filter_panel.dart';
 import '../../widgets/product_grid.dart';
 import '../../widgets/search_bar.dart';
 
 class LikedPage extends StatefulWidget {
-  final TextEditingController searchController;
   final Function(Product) onProductSelected;
-  final ValueChanged<String>? onSearchChanged;
-  final VoidCallback? onSearchSubmitted;
-  final VoidCallback? onClearSearch;
 
-  const LikedPage({
-    super.key,
-    required this.searchController,
-    required this.onProductSelected,
-    this.onSearchChanged,
-    this.onSearchSubmitted,
-    this.onClearSearch,
-  });
+  const LikedPage({super.key, required this.onProductSelected});
 
   @override
   State<LikedPage> createState() => _LikedPageState();
@@ -28,12 +19,18 @@ class LikedPage extends StatefulWidget {
 
 class _LikedPageState extends State<LikedPage>
     with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
+  late final TextEditingController _searchController;
+  late final AnimationController _animationController;
+
+  String _searchQuery = '';
   bool _isFilterPanelVisible = false;
 
   @override
   void initState() {
     super.initState();
+    _searchController = TextEditingController();
+    _searchController.addListener(_onSearchChanged);
+
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 250),
@@ -42,8 +39,29 @@ class _LikedPageState extends State<LikedPage>
 
   @override
   void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
     _animationController.dispose();
     super.dispose();
+  }
+
+  void _onSearchChanged() {
+    if (_searchQuery != _searchController.text.trim()) {
+      setState(() {
+        _searchQuery = _searchController.text.trim();
+      });
+    }
+  }
+
+  void _onClearSearch() {
+    _searchController.clear();
+    setState(() {
+      _searchQuery = '';
+    });
+  }
+
+  void _onSearchSubmitted() {
+    print("Search submitted on LikedPage: $_searchQuery");
   }
 
   void _toggleFilterPanel() {
@@ -66,9 +84,18 @@ class _LikedPageState extends State<LikedPage>
     const double searchBarHeight = 50.0;
 
     final likedProvider = context.watch<LikedProvider>();
-    final likedItems = likedProvider.likedItems
+    final allLikedProducts = likedProvider.likedItems
         .map((item) => item.product)
         .toList();
+
+    final filteredProducts = _searchQuery.isEmpty
+        ? allLikedProducts
+        : allLikedProducts.where((product) {
+            final query = _searchQuery.toLowerCase();
+            final nameMatch = product.name.toLowerCase().contains(query);
+            final brandMatch = product.brand.name.toLowerCase().contains(query);
+            return nameMatch || brandMatch;
+          }).toList();
 
     return Column(
       children: [
@@ -86,26 +113,23 @@ class _LikedPageState extends State<LikedPage>
                   child: FilterPanel(onApply: _applyFilterAndClose),
                 ),
               ),
-
               CustomSearchBar(
-                controller: widget.searchController,
+                controller: _searchController,
                 hintText: "Искать в избранном...",
-                onSearchChanged: widget.onSearchChanged,
-                onSearchSubmitted: widget.onSearchSubmitted,
-                onClear: widget.onClearSearch,
+                onSearchSubmitted: _onSearchSubmitted,
+                onClear: _onClearSearch,
                 onFilterTap: _toggleFilterPanel,
               ),
             ],
           ),
         ),
-
         Expanded(
           child: GestureDetector(
             onTap: _isFilterPanelVisible ? _toggleFilterPanel : null,
             child: Padding(
               padding: const EdgeInsets.only(top: 30),
               child: ProductGrid(
-                products: likedItems,
+                products: filteredProducts,
                 maxCrossAxisExtent: 420,
                 onProductSelected: widget.onProductSelected,
               ),

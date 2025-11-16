@@ -101,13 +101,7 @@ class _DashboardPageState extends State<DashboardPage> {
         onClearSearch: _onClearSearch,
       ),
       ProfilePage(onProductSelected: _selectProduct),
-      LikedPage(
-        searchController: _searchController,
-        onProductSelected: _selectProduct,
-        onSearchChanged: _onSearchChanged,
-        onSearchSubmitted: _onSearchSubmitted,
-        onClearSearch: _onClearSearch,
-      ),
+      LikedPage(onProductSelected: _selectProduct),
       CartPage(onProductSelected: _selectProduct),
     ];
 
