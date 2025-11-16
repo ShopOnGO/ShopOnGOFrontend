@@ -87,7 +87,6 @@ class _MainPageState extends State<MainPage>
                 onClear: widget.onClearSearch,
                 onFilterTap: _toggleFilterPanel,
               ),
-              // -------------------------
             ],
           ),
         ),

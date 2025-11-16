@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../data/providers/auth_provider.dart';
 
 class TopNavbar extends StatelessWidget {
   final int currentIndex;
@@ -23,16 +25,19 @@ class TopNavbar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+    final authProvider = context.watch<AuthProvider>();
+
     final Color activeColor = colorScheme.primary;
     final Color inactiveColor = colorScheme.secondaryContainer;
     final Color borderColor = theme.scaffoldBackgroundColor;
     final Color iconAndTextColor = colorScheme.onSecondaryContainer;
-    
+
     final items = [
       {"icon": Icons.home, "label": "Главная"},
       {"icon": Icons.list, "label": "Каталог"},
-      {"icon": Icons.person, "label": "Личный кабинет"},
+      authProvider.isAuthenticated
+          ? {"icon": Icons.person, "label": "Личный кабинет"}
+          : {"icon": Icons.login, "label": "Войти"},
       {"icon": Icons.star, "label": "Избранное"},
       {"icon": Icons.shopping_cart, "label": "Корзина"},
     ];
@@ -50,14 +55,21 @@ class TopNavbar extends StatelessWidget {
 
         if (baseItemWidth < minContentWidth) {
           calculatedItemWidth = minContentWidth;
-          calculatedOverlap = (items.length * calculatedItemWidth - availableWidth) / (items.length - 1);
+          calculatedOverlap =
+              (items.length * calculatedItemWidth - availableWidth) /
+              (items.length - 1);
           if (calculatedOverlap < 0) calculatedOverlap = 0;
         } else {
           calculatedItemWidth = baseItemWidth * 1.1;
           calculatedOverlap = baseItemWidth * 0.1;
         }
-        calculatedItemWidth = calculatedItemWidth.clamp(minContentWidth, maxContentWidth);
-        double totalNavbarWidth = items.length * calculatedItemWidth - (items.length - 1) * calculatedOverlap;
+        calculatedItemWidth = calculatedItemWidth.clamp(
+          minContentWidth,
+          maxContentWidth,
+        );
+        double totalNavbarWidth =
+            items.length * calculatedItemWidth -
+            (items.length - 1) * calculatedOverlap;
         totalNavbarWidth = totalNavbarWidth.clamp(0, availableWidth);
         return Padding(
           padding: margin,
@@ -73,11 +85,11 @@ class TopNavbar extends StatelessWidget {
                     ...List.generate(items.length, (index) {
                       if (index == currentIndex) return const SizedBox();
                       return _buildTab(
-                        context, 
-                        index, 
-                        items[index], 
-                        false, 
-                        calculatedItemWidth, 
+                        context,
+                        index,
+                        items[index],
+                        false,
+                        calculatedItemWidth,
                         calculatedOverlap,
                         inactiveColor,
                         borderColor,
@@ -86,10 +98,10 @@ class TopNavbar extends StatelessWidget {
                     }),
                     _buildTab(
                       context,
-                      currentIndex, 
-                      items[currentIndex], 
-                      true, 
-                      calculatedItemWidth, 
+                      currentIndex,
+                      items[currentIndex],
+                      true,
+                      calculatedItemWidth,
                       calculatedOverlap,
                       activeColor,
                       borderColor,
@@ -107,16 +119,17 @@ class TopNavbar extends StatelessWidget {
 
   Widget _buildTab(
     BuildContext context,
-    int index, Map<String, dynamic> item, 
-    bool active, 
-    double itemWidth, 
+    int index,
+    Map<String, dynamic> item,
+    bool active,
+    double itemWidth,
     double overlap,
     Color backgroundColor,
     Color borderColor,
     Color contentColor,
   ) {
     final theme = Theme.of(context);
-    
+
     return Positioned(
       left: index * itemWidth - index * overlap,
       child: GestureDetector(
@@ -151,7 +164,10 @@ class TopNavbar extends StatelessWidget {
                   const SizedBox(width: 4),
                   Text(
                     item["label"],
-                    style: theme.textTheme.bodySmall?.copyWith(color: contentColor, fontWeight: FontWeight.w600),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: contentColor,
+                      fontWeight: FontWeight.w600,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

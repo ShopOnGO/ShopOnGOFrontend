@@ -9,6 +9,7 @@ import '../presentation/pages/main/main_page.dart';
 import '../presentation/pages/product_detail/product_detail_page.dart';
 import '../presentation/pages/profile/profile_page.dart';
 import '../presentation/widgets/top_navbar.dart';
+import '../presentation/pages/auth/login_page.dart';
 
 class DashboardPage extends StatefulWidget {
   final VoidCallback toggleTheme;
@@ -47,6 +48,21 @@ class _DashboardPageState extends State<DashboardPage> {
       _selectedProduct = null;
     });
   }
+
+  void _showLoginDialog() {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.6), 
+      builder: (BuildContext dialogContext) {
+        return LoginPage(
+          onClose: () {
+            Navigator.of(dialogContext).pop();
+          },
+        );
+      },
+    );
+  }
+
 
   void _onSearchChanged(String query) {
     print("Dashboard: Search query changed to: $query");
@@ -100,7 +116,10 @@ class _DashboardPageState extends State<DashboardPage> {
         onSearchSubmitted: _onSearchSubmitted,
         onClearSearch: _onClearSearch,
       ),
-      ProfilePage(onProductSelected: _selectProduct),
+      ProfilePage(
+        onProductSelected: _selectProduct,
+        onLoginRequested: _showLoginDialog, 
+      ),
       LikedPage(
         searchController: _searchController,
         onProductSelected: _selectProduct,
