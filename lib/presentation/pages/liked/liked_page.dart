@@ -100,7 +100,7 @@ class _LikedPageState extends State<LikedPage>
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(45, 0, 45, 0),
+          padding: const EdgeInsets.fromLTRB(45, 5, 45, 0),
           child: Stack(
             children: [
               Padding(

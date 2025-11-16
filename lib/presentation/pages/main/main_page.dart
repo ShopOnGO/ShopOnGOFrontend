@@ -67,7 +67,7 @@ class _MainPageState extends State<MainPage>
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(45, 0, 45, 0),
+          padding: const EdgeInsets.fromLTRB(45, 5, 45, 0),
           child: Stack(
             children: [
               Padding(

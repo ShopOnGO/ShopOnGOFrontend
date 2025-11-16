@@ -10,7 +10,7 @@ class CartProvider with ChangeNotifier {
 
   int get itemCount => _items.length;
 
-  void addToCart(Product product, ProductVariant variant) {
+  void addToCart(Product product, ProductVariant variant, {int quantity = 1}) {
     final cartId = '${product.id}_${variant.id}';
 
     if (_items.containsKey(cartId)) {
@@ -20,7 +20,7 @@ class CartProvider with ChangeNotifier {
           id: existingCartItem.id,
           product: existingCartItem.product,
           selectedVariant: existingCartItem.selectedVariant,
-          quantity: existingCartItem.quantity + 1,
+          quantity: existingCartItem.quantity + quantity,
         ),
       );
     } else {
@@ -30,7 +30,7 @@ class CartProvider with ChangeNotifier {
           id: cartId,
           product: product,
           selectedVariant: variant,
-          quantity: 1,
+          quantity: quantity,
         ),
       );
     }
