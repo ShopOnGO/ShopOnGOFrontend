@@ -9,6 +9,7 @@ import '../presentation/pages/main/main_page.dart';
 import '../presentation/pages/product_detail/product_detail_page.dart';
 import '../presentation/pages/profile/profile_page.dart';
 import '../presentation/widgets/top_navbar.dart';
+import '../presentation/widgets/custom_notification.dart';
 
 class DashboardPage extends StatefulWidget {
   final VoidCallback toggleTheme;
@@ -57,22 +58,11 @@ class _DashboardPageState extends State<DashboardPage> {
     print("Dashboard: Search submitted for: $query");
 
     if (query.length < 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: Theme.of(context).colorScheme.error,
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          content: const Row(
-            children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.white),
-              SizedBox(width: 8),
-              Text('Поисковый запрос должен содержать минимум 3 символа'),
-            ],
-          ),
-        ),
+      NotificationHelper.show(
+        context,
+        message: 'Поисковый запрос должен содержать минимум 3 символа',
+        backgroundColor: Theme.of(context).colorScheme.error,
+        icon: Icons.warning_amber_rounded,
       );
     } else {
       _onTabSelected(catalogPageIndex);

@@ -4,6 +4,7 @@ import '../../../data/models/product.dart';
 import '../../../data/providers/cart_provider.dart';
 import '../../../data/providers/liked_provider.dart';
 import '../../../data/providers/view_history_provider.dart';
+import '../../widgets/custom_notification.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final Product product;
@@ -62,8 +63,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     return Scaffold(
       body: SingleChildScrollView(
         child: Padding(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 40.0, vertical: 32.0),
+          padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 32.0),
           child: Stack(
             clipBehavior: Clip.none,
             children: [
@@ -73,7 +73,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   color: theme.colorScheme.secondaryContainer,
                   borderRadius: BorderRadius.circular(22.0),
                   border: Border.all(
-                      color: theme.scaffoldBackgroundColor, width: 6.0),
+                    color: theme.scaffoldBackgroundColor,
+                    width: 6.0,
+                  ),
                 ),
                 child: LayoutBuilder(
                   builder: (context, constraints) {
@@ -91,9 +93,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   color: theme.scaffoldBackgroundColor,
                   shape: const CircleBorder(),
                   child: IconButton(
-                    icon: Icon(Icons.close,
-                        color: theme.iconTheme.color,
-                        size: closeButtonIconSize),
+                    icon: Icon(
+                      Icons.close,
+                      color: theme.iconTheme.color,
+                      size: closeButtonIconSize,
+                    ),
                     onPressed: widget.onClose,
                     splashRadius: 28,
                   ),
@@ -109,23 +113,17 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   Widget _buildWideLayout(BuildContext context) {
     final imageUrl =
         widget.product.variants[_selectedVariantIndex].imageURLs.isNotEmpty
-            ? widget.product.variants[_selectedVariantIndex].imageURLs.first
-            : null;
+        ? widget.product.variants[_selectedVariantIndex].imageURLs.first
+        : null;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24.0, 30.0, 24.0, 24.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            flex: 6,
-            child: _buildImagePanel(context, imageUrl),
-          ),
+          Expanded(flex: 6, child: _buildImagePanel(context, imageUrl)),
           const SizedBox(width: 24),
-          Expanded(
-            flex: 5,
-            child: _buildDetailsPanel(context),
-          ),
+          Expanded(flex: 5, child: _buildDetailsPanel(context)),
         ],
       ),
     );
@@ -162,8 +160,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       const SizedBox(height: 8),
                       Text(
                         widget.product.name,
-                        style: textTheme.headlineMedium
-                            ?.copyWith(fontWeight: FontWeight.bold),
+                        style: textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -180,18 +179,16 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   onPressed: () {
                     if (isLiked) {
                       likedProvider.removeFromLiked(
-                          '${widget.product.id}_${selectedVariant.id}');
+                        '${widget.product.id}_${selectedVariant.id}',
+                      );
                     } else {
-                      likedProvider.addToLiked(
-                          widget.product, selectedVariant);
+                      likedProvider.addToLiked(widget.product, selectedVariant);
                     }
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(isLiked
-                            ? 'Удалено из избранного'
-                            : 'Добавлено в избранное!'),
-                        duration: const Duration(seconds: 2),
-                      ),
+                    NotificationHelper.show(
+                      context,
+                      message: isLiked
+                          ? 'Удалено из избранного'
+                          : 'Добавлено в избранное!',
                     );
                   },
                   icon: Icon(
@@ -207,7 +204,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           ),
         ),
         const SizedBox(height: 5),
-        
+
         _buildPurchasePanel(context),
 
         const SizedBox(height: 5),
@@ -251,12 +248,15 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Цвет: ${selectedVariant.colors}',
-                        style: textTheme.titleMedium),
+                    Text(
+                      'Цвет: ${selectedVariant.colors}',
+                      style: textTheme.titleMedium,
+                    ),
                     const SizedBox(height: 16),
                     Row(
-                      children: List.generate(widget.product.variants.length,
-                          (index) {
+                      children: List.generate(widget.product.variants.length, (
+                        index,
+                      ) {
                         final variant = widget.product.variants[index];
                         final color = _getColorFromString(variant.colors);
                         final isSelected = index == _selectedVariantIndex;
@@ -271,7 +271,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                               border: isSelected
                                   ? Border.all(
                                       color: theme.colorScheme.primary,
-                                      width: 2.5)
+                                      width: 2.5,
+                                    )
                                   : null,
                             ),
                             child: Container(
@@ -281,9 +282,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                 color: color,
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: theme.dividerColor.withValues(alpha: 0.5),
-                                  width:
-                                      color == const Color(0xFFF5F5F5) ? 2 : 0,
+                                  color: theme.dividerColor.withValues(
+                                    alpha: 0.5,
+                                  ),
+                                  width: color == const Color(0xFFF5F5F5)
+                                      ? 2
+                                      : 0,
                                 ),
                               ),
                             ),
@@ -331,24 +335,24 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               child: ElevatedButton(
                 onPressed: () {
                   context.read<CartProvider>().addToCart(
-                        widget.product,
-                        selectedVariant,
-                        quantity: _quantity,
-                      );
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                          '${widget.product.name} (x$_quantity) добавлен в корзину!'),
-                      duration: const Duration(seconds: 2),
-                    ),
+                    widget.product,
+                    selectedVariant,
+                    quantity: _quantity,
+                  );
+                  NotificationHelper.show(
+                    context,
+                    message:
+                        '${widget.product.name} (x$_quantity) добавлен в корзину!',
                   );
                 },
+
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   backgroundColor: theme.colorScheme.primary,
                   foregroundColor: theme.colorScheme.onPrimary,
-                  textStyle: textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                  textStyle: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 child: const Text('Добавить в корзину'),
               ),
@@ -359,10 +363,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     );
   }
 
-
   Widget _buildNarrowLayout(BuildContext context) {
-    final imageUrl = widget
-        .product.variants[_selectedVariantIndex].imageURLs.isNotEmpty
+    final imageUrl =
+        widget.product.variants[_selectedVariantIndex].imageURLs.isNotEmpty
         ? widget.product.variants[_selectedVariantIndex].imageURLs.first
         : null;
     return Padding(
