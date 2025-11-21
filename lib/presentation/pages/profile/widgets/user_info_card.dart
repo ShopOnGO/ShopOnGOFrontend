@@ -86,7 +86,7 @@ class UserInfoCard extends StatelessWidget {
                 width: 60,
                 height: 60,
                 color: theme.colorScheme.surfaceContainerHighest,
-                child: user.avatarUrl != null
+                child: user.avatarUrl != null && user.avatarUrl!.isNotEmpty
                     ? Image.network(
                         user.avatarUrl!,
                         fit: BoxFit.cover,
@@ -101,7 +101,7 @@ class UserInfoCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(user.name, style: textTheme.headlineSmall),
+                  Text(user.name ?? 'Имя', style: textTheme.headlineSmall),
                   Text(
                     user.email,
                     style: textTheme.bodyMedium?.copyWith(
