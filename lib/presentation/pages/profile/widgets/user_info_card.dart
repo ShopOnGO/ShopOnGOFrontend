@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../data/providers/auth_provider.dart';
 import 'profile_action_button.dart';
+import 'edit_profile_dialog.dart';
 
 class UserInfoCard extends StatelessWidget {
   final VoidCallback onLoginRequested;
@@ -37,6 +38,16 @@ class UserInfoCard extends StatelessWidget {
             ),
           ],
         );
+      },
+    );
+  }
+
+  void _showEditProfileDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.6),
+      builder: (BuildContext context) {
+        return const EditProfileDialog();
       },
     );
   }
@@ -113,8 +124,9 @@ class UserInfoCard extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.edit_outlined),
-              onPressed: () {},
+              onPressed: () => _showEditProfileDialog(context),
               style: buttonStyle,
+              tooltip: 'Редактировать профиль',
             ),
             const SizedBox(width: 8),
             IconButton(
@@ -123,6 +135,7 @@ class UserInfoCard extends StatelessWidget {
                 _showLogoutConfirmationDialog(context);
               },
               style: buttonStyle,
+              tooltip: 'Выйти',
             ),
           ],
         ),

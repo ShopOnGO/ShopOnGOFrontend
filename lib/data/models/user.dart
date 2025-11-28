@@ -14,11 +14,16 @@ class User {
   });
 
   factory User.fromTokenPayload(Map<String, dynamic> payload, {String? name}) {
+    String? extractedName = payload['name'] ?? payload['username'];
+    
+    String finalName = extractedName ?? name ?? 'Пользователь';
+
     return User(
-      id: payload['user_id']?.toString() ?? '0',
+      id: payload['user_id']?.toString() ?? payload['sub']?.toString() ?? '0',
       email: payload['email'] ?? '',
       role: payload['role'] ?? 'buyer',
-      name: name ?? 'Имя',
+      name: finalName,
+      avatarUrl: payload['avatar_url'], 
     );
   }
 }
