@@ -27,20 +27,30 @@ class ChatMessageBubble extends StatelessWidget {
                 ? theme.colorScheme.primary
                 : theme.colorScheme.secondaryContainer,
             borderRadius: BorderRadius.only(
-              topLeft: const Radius.circular(16),
-              topRight: const Radius.circular(16),
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
               bottomLeft: Radius.circular(isMyMessage ? 16 : 0),
               bottomRight: Radius.circular(isMyMessage ? 0 : 16),
             ),
           ),
-          child: Text(
-            message.text,
-            style: TextStyle(
-              color: isMyMessage
-                  ? theme.colorScheme.onPrimary
-                  : theme.colorScheme.onSecondaryContainer,
-            ),
-          ),
+          child: message.imageUrl != null
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    message.imageUrl!,
+                    width: 180,
+                    height: 180,
+                    fit: BoxFit.cover,
+                  ),
+                )
+              : Text(
+                  message.text ?? '',
+                  style: TextStyle(
+                    color: isMyMessage
+                        ? theme.colorScheme.onPrimary
+                        : theme.colorScheme.onSecondaryContainer,
+                  ),
+                ),
         ),
       ],
     );

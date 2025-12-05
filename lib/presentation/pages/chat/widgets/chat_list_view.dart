@@ -85,6 +85,13 @@ class ChatListView extends StatelessWidget {
         ? colorScheme.primary
         : colorScheme.secondaryContainer;
 
+    final String lastMessage = (conversation.messages.isNotEmpty)
+        ? (conversation.messages.last.text ?? '')
+        : '';
+
+    final String avatarLetter =
+        (conversation.name.isNotEmpty) ? conversation.name.substring(0, 1) : '?';
+
     return GestureDetector(
       onTap: () => onConversationSelected(conversation),
       child: AnimatedContainer(
@@ -106,7 +113,7 @@ class ChatListView extends StatelessWidget {
               CircleAvatar(
                 backgroundColor: Colors.transparent,
                 child: Text(
-                  conversation.name.substring(0, 1),
+                  avatarLetter,
                   style: TextStyle(
                     fontSize: 20,
                     color: colorScheme.onSecondaryContainer,
@@ -129,7 +136,7 @@ class ChatListView extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      conversation.messages.last.text,
+                      lastMessage,
                       style: TextStyle(
                         fontSize: 12,
                         color: colorScheme.onSecondaryContainer.withValues(
@@ -146,15 +153,11 @@ class ChatListView extends StatelessWidget {
                 const SizedBox(width: 8),
                 CircleAvatar(
                   radius: 12,
-                  backgroundColor: isSelected
-                      ? theme.cardColor
-                      : colorScheme.primary,
+                  backgroundColor: isSelected ? theme.cardColor : colorScheme.primary,
                   child: Text(
                     conversation.unreadCount.toString(),
                     style: TextStyle(
-                      color: isSelected
-                          ? colorScheme.primary
-                          : colorScheme.onPrimary,
+                      color: isSelected ? colorScheme.primary : colorScheme.onPrimary,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),

@@ -23,36 +23,13 @@ class ChatProvider with ChangeNotifier {
         messages: [
           ChatMessage(
             text: 'Здравствуйте! Чем можем помочь?',
-            timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
+            timestamp: DateTime.now().subtract(Duration(minutes: 5)),
             isSentByMe: false,
           ),
           ChatMessage(
             text: 'У меня вопрос по заказу #12345',
-            timestamp: DateTime.now().subtract(const Duration(minutes: 2)),
+            timestamp: DateTime.now().subtract(Duration(minutes: 2)),
             isSentByMe: true,
-          ),
-          ChatMessage(
-            text: 'Минутку, сейчас все проверим.',
-            timestamp: DateTime.now().subtract(const Duration(minutes: 1)),
-            isSentByMe: false,
-          ),
-          ChatMessage(
-            text: 'Ваш заказ уже в пути!',
-            timestamp: DateTime.now(),
-            isSentByMe: false,
-          ),
-        ],
-      ),
-      ChatConversation(
-        id: '2',
-        name: 'Менеджер Василий',
-        avatarUrl: 'https://cdn-icons-png.flaticon.com/512/3048/3048122.png',
-        unreadCount: 0,
-        messages: [
-          ChatMessage(
-            text: 'Все в порядке, мы получили оплату.',
-            timestamp: DateTime.now().subtract(const Duration(hours: 1)),
-            isSentByMe: false,
           ),
         ],
       ),
@@ -68,14 +45,43 @@ class ChatProvider with ChangeNotifier {
   void markAsRead(String conversationId) {
     final index = _conversations.indexWhere((c) => c.id == conversationId);
     if (index != -1) {
+      final conv = _conversations[index];
       _conversations[index] = ChatConversation(
-        id: _conversations[index].id,
-        name: _conversations[index].name,
-        avatarUrl: _conversations[index].avatarUrl,
-        messages: _conversations[index].messages,
+        id: conv.id,
+        name: conv.name,
+        avatarUrl: conv.avatarUrl,
+        messages: conv.messages,
         unreadCount: 0,
       );
       _updateUnreadStatus();
     }
+  }
+
+  void addMessage(String conversationId, ChatMessage message) {
+    final index = _conversations.indexWhere((c) => c.id == conversationId);
+    if (index == -1) return;
+
+    final conv = _conversations[index];
+    _conversations[index] = ChatConversation(
+      id: conv.id,
+      name: conv.name,
+      avatarUrl: conv.avatarUrl,
+      unreadCount: conv.unreadCount,
+      messages: [...conv.messages, message],
+    );
+    notifyListeners();
+  }
+
+  void createConversation(String userId) {
+    final conv = ChatConversation(
+      id: userId,
+      name: 'Пользователь $userId',
+      avatarUrl: 'https://cdn-icons-png.flaticon.com/512/1946/1946429.png',
+      unreadCount: 0,
+      messages: [],
+    );
+
+    _conversations.insert(0, conv);
+    notifyListeners();
   }
 }

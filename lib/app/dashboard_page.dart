@@ -175,7 +175,6 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ),
 
-          // Positioned теперь является прямым потомком Stack
           Positioned(
             right: 24.0,
             bottom: 24.0,

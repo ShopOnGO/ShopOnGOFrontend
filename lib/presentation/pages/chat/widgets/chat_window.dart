@@ -33,6 +33,41 @@ class _ChatWindowState extends State<ChatWindow> {
     context.read<ChatProvider>().markAsRead(conversation.id);
   }
 
+  Future<void> _createNewChat() async {
+    final id = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        final controller = TextEditingController();
+        return AlertDialog(
+          title: const Text('Новый чат'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              hintText: 'Введите ID пользователя',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Отмена'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, controller.text.trim()),
+              child: const Text('Создать'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (id != null && id.isNotEmpty) {
+      context.read<ChatProvider>().createConversation(id);
+      setState(() {
+        _selectedConversation = context.read<ChatProvider>().conversations.first;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -57,60 +92,59 @@ class _ChatWindowState extends State<ChatWindow> {
               ),
             ],
           ),
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  color: theme.colorScheme.surface,
-                  child: Row(
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: theme.colorScheme.outline.withValues(
-                              alpha: 0.5,
-                            ),
-                            width: 1.5,
-                          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                color: theme.colorScheme.surface,
+                child: Row(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: theme.colorScheme.outline.withValues(alpha: 0.5),
+                          width: 1.5,
                         ),
-                        child: InkWell(
-                          onTap: widget.onClose,
-                          borderRadius: BorderRadius.circular(30),
-                          child: Padding(
-                            padding: const EdgeInsets.all(4.0),
-                            child: ChatFab(
-                              state: hasUnread
-                                  ? MailboxState.hasUnread
-                                  : MailboxState.closed,
-                            ),
+                      ),
+                      child: InkWell(
+                        onTap: widget.onClose,
+                        borderRadius: BorderRadius.circular(30),
+                        child: Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: ChatFab(
+                            state: hasUnread
+                                ? MailboxState.hasUnread
+                                : MailboxState.closed,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Чаты',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'Чаты',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ],
                 ),
-                SizedBox(
-                  height: MediaQuery.of(context).size.height,
-                  child: ChatListView(
-                    onConversationSelected: _onConversationSelected,
-                    selectedConversationId: _selectedConversation?.id,
-                  ),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: ElevatedButton.icon(
+                  onPressed: _createNewChat,
+                  icon: const Icon(Icons.add),
+                  label: const Text("Новый чат"),
                 ),
-              ],
-            ),
+              ),
+
+              Expanded(
+                child: ChatListView(
+                  onConversationSelected: _onConversationSelected,
+                  selectedConversationId: _selectedConversation?.id,
+                ),
+              ),
+            ],
           ),
         ),
 
@@ -148,6 +182,7 @@ class _ChatWindowState extends State<ChatWindow> {
                               ],
                             ),
                           ),
+
                           Expanded(
                             child: ChatDetailView(
                               conversation: _selectedConversation!,

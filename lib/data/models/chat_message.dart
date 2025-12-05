@@ -1,11 +1,14 @@
 class ChatMessage {
-  final String text;
-  final DateTime timestamp;
-  final bool isSentByMe;
+final String? text;
+final String? imageUrl;
+final DateTime timestamp;
+final bool isSentByMe;
 
-  ChatMessage({
-    required this.text,
-    required this.timestamp,
-    required this.isSentByMe,
-  });
+
+ChatMessage({
+this.text,
+this.imageUrl,
+required this.timestamp,
+required this.isSentByMe,
+});
 }
