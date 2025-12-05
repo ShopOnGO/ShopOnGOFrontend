@@ -9,7 +9,8 @@ import '../presentation/pages/main/main_page.dart';
 import '../presentation/pages/product_detail/product_detail_page.dart';
 import '../presentation/pages/profile/profile_page.dart';
 import '../presentation/widgets/top_navbar.dart';
-import '../presentation/pages/auth/login_page.dart';
+import '../presentation/pages/auth/login_page.dart'; // ← Оставьте это
+import '../presentation/pages/chat/chat_overlay.dart'; // ← Добавьте это
 
 class DashboardPage extends StatefulWidget {
   final VoidCallback toggleTheme;
@@ -27,6 +28,7 @@ class _DashboardPageState extends State<DashboardPage> {
   int? _selectedBrandId;
 
   Product? _selectedProduct;
+  bool _isChatOpen = false;
 
   static const int catalogPageIndex = 1;
 
@@ -68,11 +70,18 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  void _toggleChat() {
+    setState(() {
+      _isChatOpen = !_isChatOpen;
+    });
+  }
+
   void _onSearchChanged(String query) {
+    // Можно оставить пустым или добавить логику
   }
 
   void _onSearchSubmitted() {
-      _onTabSelected(catalogPageIndex);
+    _onTabSelected(catalogPageIndex);
   }
 
   void _onClearSearch() {
@@ -170,6 +179,23 @@ class _DashboardPageState extends State<DashboardPage> {
                         onClose: _closeProductDetail,
                       )
                     : const SizedBox.shrink(),
+              ),
+            ),
+          ),
+
+          // Чат оверлей - НОВЫЙ ВИДЖЕТ ИЗ ВЕТКИ chat_widget
+          Positioned(
+            right: 24.0,
+            bottom: 24.0,
+            child: IgnorePointer(
+              ignoring: _selectedProduct != null,
+              child: AnimatedOpacity(
+                opacity: _selectedProduct != null ? 0.0 : 1.0,
+                duration: const Duration(milliseconds: 300),
+                child: ChatOverlay(
+                  isChatOpen: _isChatOpen,
+                  toggleChat: _toggleChat,
+                ),
               ),
             ),
           ),
