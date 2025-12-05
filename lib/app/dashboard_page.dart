@@ -68,6 +68,17 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  void _onSearchChanged(String query) {
+  }
+
+  void _onSearchSubmitted() {
+      _onTabSelected(catalogPageIndex);
+  }
+
+  void _onClearSearch() {
+    _searchController.clear();
+  }
+
   void _onApplyFilters(RangeValues range, int? brandId) {
     setState(() {
       _priceRange = range;
@@ -82,6 +93,9 @@ class _DashboardPageState extends State<DashboardPage> {
       MainPage(
         searchController: _searchController,
         onProductSelected: _selectProduct,
+        onSearchChanged: _onSearchChanged,
+        onSearchSubmitted: _onSearchSubmitted,
+        onClearSearch: _onClearSearch,
         onApplyFilters: _onApplyFilters,
       ),
       CatalogPage(
@@ -89,6 +103,9 @@ class _DashboardPageState extends State<DashboardPage> {
         priceRange: _priceRange,
         selectedBrandId: _selectedBrandId,
         onProductSelected: _selectProduct,
+        onSearchChanged: _onSearchChanged,
+        onSearchSubmitted: _onSearchSubmitted,
+        onClearSearch: _onClearSearch,
         onApplyFilters: _onApplyFilters,
       ),
       ProfilePage(

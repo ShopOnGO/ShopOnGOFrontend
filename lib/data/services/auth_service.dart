@@ -1,21 +1,11 @@
 import 'dart:convert';
-import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 
 class AuthService {
-  String get _baseUrl {
-    if (kIsWeb) {
-      return 'http://localhost:8081';
-    } else if (Platform.isAndroid) {
-      return 'http://10.0.2.2:8081';
-    } else {
-      return 'http://localhost:8081';
-    }
-  }
-
+  
   Future<String> login(String email, String password) async {
-    final url = Uri.parse('$_baseUrl/auth/login');
+    final url = Uri.parse(ApiConfig.loginEndpoint);
 
     try {
       final response = await http.post(
@@ -36,13 +26,12 @@ class AuthService {
         }
       }
     } catch (e) {
-      if (e.toString().contains('Exception:')) rethrow;
-      throw Exception('Не удалось подключиться к серверу: $e');
+      throw Exception('Ошибка соединения с Auth Service: $e');
     }
   }
 
   Future<String> register(String email, String password, String name) async {
-    final url = Uri.parse('$_baseUrl/auth/register');
+    final url = Uri.parse(ApiConfig.registerEndpoint);
 
     try {
       final response = await http.post(
@@ -63,8 +52,7 @@ class AuthService {
         }
       }
     } catch (e) {
-      if (e.toString().contains('Exception:')) rethrow;
-      throw Exception('Не удалось подключиться к серверу: $e');
+      throw Exception('Ошибка соединения с Auth Service: $e');
     }
   }
 
@@ -74,7 +62,7 @@ class AuthService {
     String newPassword,
     String confirmPassword,
   ) async {
-    final url = Uri.parse('$_baseUrl/auth/change/password');
+    final url = Uri.parse(ApiConfig.changePasswordEndpoint);
 
     try {
       final response = await http.post(
@@ -101,7 +89,6 @@ class AuthService {
         throw Exception(errorMsg);
       }
     } catch (e) {
-      if (e.toString().contains('Exception:')) rethrow;
       throw Exception('Не удалось сменить пароль: $e');
     }
   }
