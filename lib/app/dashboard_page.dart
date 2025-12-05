@@ -9,7 +9,6 @@ import '../presentation/pages/main/main_page.dart';
 import '../presentation/pages/product_detail/product_detail_page.dart';
 import '../presentation/pages/profile/profile_page.dart';
 import '../presentation/widgets/top_navbar.dart';
-import '../presentation/widgets/custom_notification.dart';
 
 class DashboardPage extends StatefulWidget {
   final VoidCallback toggleTheme;
@@ -22,9 +21,14 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   int currentIndex = 0;
   final TextEditingController _searchController = TextEditingController();
+  
+  RangeValues _priceRange = const RangeValues(0, 300);
+  int? _selectedBrandId;
+
   Product? _selectedProduct;
 
   static const int catalogPageIndex = 1;
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -50,27 +54,22 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   void _onSearchChanged(String query) {
-    print("Dashboard: Search query changed to: $query");
   }
 
   void _onSearchSubmitted() {
-    final query = _searchController.text.trim();
-    print("Dashboard: Search submitted for: $query");
-
-    if (query.length < 3) {
-      NotificationHelper.show(
-        context,
-        message: 'Поисковый запрос должен содержать минимум 3 символа',
-        backgroundColor: Theme.of(context).colorScheme.error,
-        icon: Icons.warning_amber_rounded,
-      );
-    } else {
-      _onTabSelected(catalogPageIndex);
-    }
+    _onTabSelected(catalogPageIndex);
   }
 
   void _onClearSearch() {
-    print("Dashboard: Search cleared.");
+    _searchController.clear();
+  }
+
+  void _onApplyFilters(RangeValues range, int? brandId) {
+    setState(() {
+      _priceRange = range;
+      _selectedBrandId = brandId;
+    });
+    _onTabSelected(catalogPageIndex);
   }
 
   @override
@@ -82,13 +81,17 @@ class _DashboardPageState extends State<DashboardPage> {
         onSearchChanged: _onSearchChanged,
         onSearchSubmitted: _onSearchSubmitted,
         onClearSearch: _onClearSearch,
+        onApplyFilters: _onApplyFilters,
       ),
       CatalogPage(
         searchController: _searchController,
+        priceRange: _priceRange,
+        selectedBrandId: _selectedBrandId,
         onProductSelected: _selectProduct,
         onSearchChanged: _onSearchChanged,
         onSearchSubmitted: _onSearchSubmitted,
         onClearSearch: _onClearSearch,
+        onApplyFilters: _onApplyFilters,
       ),
       ProfilePage(onProductSelected: _selectProduct),
       LikedPage(onProductSelected: _selectProduct),

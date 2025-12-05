@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../data/models/product.dart';
+import '../../data/providers/liked_provider.dart';
 
 class ProductCard extends StatefulWidget {
   final Product product;
@@ -110,15 +112,21 @@ class _ProductCardState extends State<ProductCard> {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
     final colorScheme = theme.colorScheme;
+    
+    final likedProvider = context.watch<LikedProvider>();
+
     if (widget.product.variants.isEmpty) {
       return Card(
         child: Center(child: Text('Нет данных', style: textTheme.bodySmall)),
       );
     }
+    
     final selectedVariant = widget.product.variants[_selectedVariantIndex];
     final imageUrl = selectedVariant.imageURLs.isNotEmpty
         ? selectedVariant.imageURLs.first
         : null;
+
+    final isLiked = likedProvider.isInLiked(widget.product, selectedVariant);
 
     return GestureDetector(
       onTap: () => widget.onProductSelected(widget.product),
@@ -148,6 +156,7 @@ class _ProductCardState extends State<ProductCard> {
                       ),
               ),
             ),
+            
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
               child: Column(
@@ -167,15 +176,47 @@ class _ProductCardState extends State<ProductCard> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    '${selectedVariant.price.toStringAsFixed(0)} BYN',
-                    style: textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                  
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        '${selectedVariant.price.toStringAsFixed(0)} BYN',
+                        style: textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Material(
+                        color: Colors.transparent,
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          customBorder: const CircleBorder(),
+                          onTap: () {
+                            if (isLiked) {
+                              likedProvider.removeFromLiked(
+                                '${widget.product.id}_${selectedVariant.id}',
+                              );
+                            } else {
+                              likedProvider.addToLiked(widget.product, selectedVariant);
+                            }
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Icon(
+                              isLiked ? Icons.star_rounded : Icons.star_border_rounded,
+                              color: isLiked ? Colors.amber[600] : colorScheme.outline,
+                              size: 26,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
+            
             if (widget.product.variants.length > 1)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12.0),

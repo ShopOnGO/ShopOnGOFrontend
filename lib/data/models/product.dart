@@ -45,13 +45,14 @@ class Product {
     var videoList = json['videoURLs'] as List? ?? [];
     List<String> videos = videoList.map((i) => i.toString()).toList();
 
-    DateTime createdAt =
-        DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now();
-    DateTime updatedAt =
-        DateTime.tryParse(json['updatedAt'] ?? '') ?? DateTime.now();
+    DateTime createdAt = DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now();
+    DateTime updatedAt = DateTime.tryParse(json['updatedAt'] ?? '') ?? DateTime.now();
+    
     DateTime? deletedAt;
-    if (json['deletedAt'] != null && json['deletedAt']['valid'] == true) {
-      deletedAt = DateTime.tryParse(json['deletedAt']['time'] ?? '');
+    if (json['deletedAt'] != null && json['deletedAt'] is Map) {
+      if (json['deletedAt']['valid'] == true) {
+        deletedAt = DateTime.tryParse(json['deletedAt']['time'] ?? '');
+      }
     }
 
     return Product(
@@ -59,8 +60,12 @@ class Product {
       name: json['name'] ?? 'Без названия',
       description: json['description'] ?? '',
       imageURLs: images,
-      brand: Brand.fromJson(json['brand'] ?? {}),
-      category: Category.fromJson(json['category'] ?? {}),
+      brand: json['brand'] != null 
+          ? Brand.fromJson(json['brand']) 
+          : Brand(id: json['brand_id'] ?? 0, name: 'Бренд #${json['brand_id']}', description: '', logo: '', videoUrl: ''),
+      category: json['category'] != null 
+          ? Category.fromJson(json['category']) 
+          : Category(id: json['category_id'] ?? 0, name: 'Категория', description: '', imageUrl: ''),
       variants: variants,
       isActive: json['is_active'] ?? true,
       videoURLs: videos,

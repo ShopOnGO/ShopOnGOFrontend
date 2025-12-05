@@ -25,6 +25,9 @@ class _LikedPageState extends State<LikedPage>
   String _searchQuery = '';
   bool _isFilterPanelVisible = false;
 
+  RangeValues _priceRange = const RangeValues(0, 300);
+  int? _selectedBrandId;
+
   @override
   void initState() {
     super.initState();
@@ -75,7 +78,11 @@ class _LikedPageState extends State<LikedPage>
     });
   }
 
-  void _applyFilterAndClose() {
+  void _applyFilterAndClose(RangeValues range, int? brandId) {
+    setState(() {
+      _priceRange = range;
+      _selectedBrandId = brandId;
+    });
     _toggleFilterPanel();
   }
 
@@ -88,14 +95,29 @@ class _LikedPageState extends State<LikedPage>
         .map((item) => item.product)
         .toList();
 
-    final filteredProducts = _searchQuery.isEmpty
-        ? allLikedProducts
-        : allLikedProducts.where((product) {
-            final query = _searchQuery.toLowerCase();
-            final nameMatch = product.name.toLowerCase().contains(query);
-            final brandMatch = product.brand.name.toLowerCase().contains(query);
-            return nameMatch || brandMatch;
-          }).toList();
+    final filteredProducts = allLikedProducts.where((product) {
+      if (_searchQuery.isNotEmpty) {
+        final query = _searchQuery.toLowerCase();
+        final nameMatch = product.name.toLowerCase().contains(query);
+        final brandMatch = product.brand.name.toLowerCase().contains(query);
+        if (!nameMatch && !brandMatch) return false;
+      }
+
+      if (product.variants.isNotEmpty) {
+        final price = product.variants.first.price;
+        if (price < _priceRange.start || price > _priceRange.end) {
+          return false;
+        }
+      }
+
+      if (_selectedBrandId != null) {
+        if (product.brand.id != _selectedBrandId) {
+          return false;
+        }
+      }
+
+      return true;
+    }).toList();
 
     return Column(
       children: [

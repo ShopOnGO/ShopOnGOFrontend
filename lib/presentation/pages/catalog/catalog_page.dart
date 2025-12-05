@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/product.dart';
+import '../../../data/services/product_service.dart';
 import '../../widgets/filter_panel.dart';
 import '../../widgets/product_grid.dart';
 import '../../widgets/search_bar.dart';
@@ -10,6 +11,10 @@ class CatalogPage extends StatefulWidget {
   final ValueChanged<String>? onSearchChanged;
   final VoidCallback? onSearchSubmitted;
   final VoidCallback? onClearSearch;
+  
+  final RangeValues priceRange;
+  final int? selectedBrandId;
+  final Function(RangeValues, int?)? onApplyFilters;
 
   const CatalogPage({
     super.key,
@@ -18,6 +23,9 @@ class CatalogPage extends StatefulWidget {
     this.onSearchChanged,
     this.onSearchSubmitted,
     this.onClearSearch,
+    this.priceRange = const RangeValues(0, 300),
+    this.selectedBrandId,
+    this.onApplyFilters,
   });
 
   @override
@@ -28,6 +36,12 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
   late AnimationController _animationController;
   bool _isFilterPanelVisible = false;
 
+  final ProductService _productService = ProductService();
+  
+  List<Product> _allProducts = [];       
+  List<Product> _filteredProducts = [];  
+  bool _isLoading = true;
+
   @override
   void initState() {
     super.initState();
@@ -35,12 +49,84 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
       vsync: this,
       duration: const Duration(milliseconds: 250),
     );
+
+    widget.searchController.addListener(_onSearchChangedLocal);
+
+    _loadData();
+  }
+
+  @override
+  void didUpdateWidget(CatalogPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.priceRange != widget.priceRange || 
+        oldWidget.selectedBrandId != widget.selectedBrandId) {
+      _runFilter();
+    }
   }
 
   @override
   void dispose() {
+    widget.searchController.removeListener(_onSearchChangedLocal);
     _animationController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    try {
+      final products = await _productService.fetchProducts();
+      if (mounted) {
+        setState(() {
+          _allProducts = products;
+          _isLoading = false;
+        });
+        _runFilter();
+      }
+    } catch (e) {
+      print("Error loading catalog: $e");
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _onSearchChangedLocal() {
+    _runFilter();
+    widget.onSearchChanged?.call(widget.searchController.text);
+  }
+
+  void _onApplyFiltersLocal(RangeValues range, int? brandId) {
+    widget.onApplyFilters?.call(range, brandId);
+    _toggleFilterPanel();
+  }
+
+  void _runFilter() {
+    if (_allProducts.isEmpty) return;
+
+    final queryLower = widget.searchController.text.toLowerCase().trim();
+
+    setState(() {
+      _filteredProducts = _allProducts.where((product) {
+        if (queryLower.isNotEmpty) {
+          final nameMatches = product.name.toLowerCase().contains(queryLower);
+          final brandMatches = product.brand.name.toLowerCase().contains(queryLower);
+          if (!nameMatches && !brandMatches) return false;
+        }
+
+        if (product.variants.isNotEmpty) {
+          final price = product.variants.first.price;
+          if (price < widget.priceRange.start || price > widget.priceRange.end) {
+            return false;
+          }
+        }
+
+        if (widget.selectedBrandId != null) {
+          if (product.brand.id != widget.selectedBrandId) {
+            return false;
+          }
+        }
+
+        return true;
+      }).toList();
+    });
   }
 
   void _toggleFilterPanel() {
@@ -52,10 +138,6 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
         _animationController.reverse();
       }
     });
-  }
-
-  void _applyFilterAndClose() {
-    _toggleFilterPanel();
   }
 
   @override
@@ -75,14 +157,14 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
                     parent: _animationController,
                     curve: Curves.fastOutSlowIn,
                   ),
-                  child: FilterPanel(onApply: _applyFilterAndClose),
+                  child: FilterPanel(onApply: _onApplyFiltersLocal),
                 ),
               ),
 
               CustomSearchBar(
                 controller: widget.searchController,
                 hintText: "Искать в каталоге...",
-                onSearchChanged: widget.onSearchChanged,
+                onSearchChanged: null,
                 onSearchSubmitted: widget.onSearchSubmitted,
                 onClear: widget.onClearSearch,
                 onFilterTap: _toggleFilterPanel,
@@ -92,15 +174,15 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
         ),
         
         Expanded(
-          child: GestureDetector(
-            onTap: _isFilterPanelVisible ? _toggleFilterPanel : null,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 30),
-              child: ProductGrid(
-                maxCrossAxisExtent: 280,
-                onProductSelected: widget.onProductSelected,
-              ),
-            ),
+          child: Padding(
+            padding: const EdgeInsets.only(top: 30),
+            child: _isLoading 
+                ? const Center(child: CircularProgressIndicator())
+                : ProductGrid(
+                    products: _filteredProducts,
+                    maxCrossAxisExtent: 280,
+                    onProductSelected: widget.onProductSelected,
+                  ),
           ),
         ),
       ],

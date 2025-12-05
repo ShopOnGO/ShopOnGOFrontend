@@ -47,30 +47,32 @@ class ProductVariant {
     var imageList = json['imageURLs'] as List? ?? [];
     List<String> images = imageList.map((i) => i.toString()).toList();
 
-    DateTime createdAt =
-        DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now();
-    DateTime updatedAt =
-        DateTime.tryParse(json['updatedAt'] ?? '') ?? DateTime.now();
+    DateTime createdAt = DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now();
+    DateTime updatedAt = DateTime.tryParse(json['updatedAt'] ?? '') ?? DateTime.now();
 
     DateTime? deletedAt;
-    if (json['deletedAt'] != null && json['deletedAt']['valid'] == true) {
-      deletedAt = DateTime.tryParse(json['deletedAt']['time'] ?? '');
+    if (json['deletedAt'] != null && json['deletedAt'] is Map) {
+       if (json['deletedAt']['valid'] == true) {
+         deletedAt = DateTime.tryParse(json['deletedAt']['time'] ?? '');
+       }
+    } else if (json['deletedAt'] != null && json['deletedAt'] is String) {
+       deletedAt = DateTime.tryParse(json['deletedAt']);
     }
 
     return ProductVariant(
       id: json['id'] ?? 0,
       sku: json['sku'] ?? '',
-      price: (json['price'] ?? 0.0).toDouble(),
+      price: (json['price'] ?? 0).toDouble(),
       sizes: json['sizes'] ?? '',
       colors: json['colors'] ?? '',
       stock: json['stock'] ?? 0,
       imageURLs: images,
       barcode: json['barcode'] ?? '',
-      dimensions: json['dimensions'] ?? 'N/A',
-      discount: (json['discount'] ?? 0.0).toDouble(),
+      dimensions: json['dimensions'] ?? '',
+      discount: (json['discount'] ?? 0).toDouble(),
       isActive: json['isActive'] ?? true,
       minOrder: json['minOrder'] ?? 1,
-      rating: (json['rating'] ?? 0.0).toDouble(),
+      rating: (json['rating'] ?? 0).toDouble(),
       reviewCount: json['reviewCount'] ?? 0,
       reservedStock: json['reservedStock'] ?? 0,
       material: json['material'] ?? '',
