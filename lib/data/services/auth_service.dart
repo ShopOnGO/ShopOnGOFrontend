@@ -56,11 +56,13 @@ class AuthService {
     }
   }
 
+  /// ----------------------------
+  /// 🔐 Смена пароля (исправленная)
+  /// ----------------------------
   Future<void> changePassword(
     String token,
     String oldPassword,
     String newPassword,
-    String confirmPassword,
   ) async {
     final url = Uri.parse(ApiConfig.changePasswordEndpoint);
 
@@ -80,12 +82,11 @@ class AuthService {
       if (response.statusCode != 200) {
         String errorMsg = response.body;
         try {
-           final decoded = jsonDecode(response.body);
-           if (decoded is Map && decoded.containsKey('error')) {
-             errorMsg = decoded['error'];
-           }
+          final decoded = jsonDecode(response.body);
+          if (decoded is Map && decoded.containsKey('error')) {
+            errorMsg = decoded['error'];
+          }
         } catch (_) {}
-        
         throw Exception(errorMsg);
       }
     } catch (e) {

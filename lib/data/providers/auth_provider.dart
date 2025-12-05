@@ -45,6 +45,7 @@ class AuthProvider with ChangeNotifier {
     _setLoading(true);
     try {
       final token = await _authService.login(email, password);
+      _printDecodedToken(token, 'LOGIN');
       await _saveAuthData(token, email: email);
     } catch (e) {
       rethrow;
@@ -57,6 +58,7 @@ class AuthProvider with ChangeNotifier {
     _setLoading(true);
     try {
       final token = await _authService.register(email, password, name);
+      _printDecodedToken(token, 'REGISTER');
       await _saveAuthData(token, email: email, name: name);
     } catch (e) {
       rethrow;
@@ -65,12 +67,36 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  Future<void> changePassword(String oldPassword, String newPassword, String confirmPassword) async {
+  void _printDecodedToken(String token, String action) {
+    try {
+      Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+      print('\n=============================================================');
+      print('>>> [$action] SUCCESS. DECODED JWT PAYLOAD:');
+      print('-------------------------------------------------------------');
+      decodedToken.forEach((key, value) => print('$key: $value'));
+      print('=============================================================\n');
+    } catch (e) {
+      print('>>> [$action] Error decoding token for log: $e');
+    }
+  }
+
+  /// ----------------------------
+  /// 🔐 Смена пароля (исправленная)
+  /// ----------------------------
+  Future<void> changePassword(
+    String oldPassword,
+    String newPassword,
+    String confirmPassword,
+  ) async {
     if (_token == null) throw Exception('Вы не авторизованы');
-    
+
+    if (newPassword != confirmPassword) {
+      throw Exception('Новые пароли не совпадают');
+    }
+
     _setLoading(true);
     try {
-      await _authService.changePassword(_token!, oldPassword, newPassword, confirmPassword);
+      await _authService.changePassword(_token!, oldPassword, newPassword);
     } catch (e) {
       rethrow;
     } finally {
