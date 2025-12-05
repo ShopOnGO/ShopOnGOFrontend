@@ -9,6 +9,7 @@ import '../presentation/pages/main/main_page.dart';
 import '../presentation/pages/product_detail/product_detail_page.dart';
 import '../presentation/pages/profile/profile_page.dart';
 import '../presentation/widgets/top_navbar.dart';
+import '../presentation/pages/auth/login_page.dart';
 
 class DashboardPage extends StatefulWidget {
   final VoidCallback toggleTheme;
@@ -53,15 +54,18 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
-  void _onSearchChanged(String query) {
-  }
-
-  void _onSearchSubmitted() {
-    _onTabSelected(catalogPageIndex);
-  }
-
-  void _onClearSearch() {
-    _searchController.clear();
+  void _showLoginDialog() {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.6), 
+      builder: (BuildContext dialogContext) {
+        return LoginPage(
+          onClose: () {
+            Navigator.of(dialogContext).pop();
+          },
+        );
+      },
+    );
   }
 
   void _onApplyFilters(RangeValues range, int? brandId) {
@@ -78,9 +82,6 @@ class _DashboardPageState extends State<DashboardPage> {
       MainPage(
         searchController: _searchController,
         onProductSelected: _selectProduct,
-        onSearchChanged: _onSearchChanged,
-        onSearchSubmitted: _onSearchSubmitted,
-        onClearSearch: _onClearSearch,
         onApplyFilters: _onApplyFilters,
       ),
       CatalogPage(
@@ -88,13 +89,15 @@ class _DashboardPageState extends State<DashboardPage> {
         priceRange: _priceRange,
         selectedBrandId: _selectedBrandId,
         onProductSelected: _selectProduct,
-        onSearchChanged: _onSearchChanged,
-        onSearchSubmitted: _onSearchSubmitted,
-        onClearSearch: _onClearSearch,
         onApplyFilters: _onApplyFilters,
       ),
-      ProfilePage(onProductSelected: _selectProduct),
-      LikedPage(onProductSelected: _selectProduct),
+      ProfilePage(
+        onProductSelected: _selectProduct,
+        onLoginRequested: _showLoginDialog, 
+      ),
+      LikedPage(
+        onProductSelected: _selectProduct,
+      ),
       CartPage(onProductSelected: _selectProduct),
     ];
 

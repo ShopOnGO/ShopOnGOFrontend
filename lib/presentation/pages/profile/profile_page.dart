@@ -7,8 +7,13 @@ import '../../../data/models/product.dart';
 
 class ProfilePage extends StatelessWidget {
   final Function(Product) onProductSelected;
+  final VoidCallback onLoginRequested;
 
-  const ProfilePage({super.key, required this.onProductSelected});
+  const ProfilePage({
+    super.key,
+    required this.onProductSelected,
+    required this.onLoginRequested,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +44,7 @@ class ProfilePage extends StatelessWidget {
                         width: borderWidth,
                       ),
                     ),
-                    child: const UserInfoCard(),
+                    child: UserInfoCard(onLoginRequested: onLoginRequested),
                   ),
                 ),
                 const SizedBox(width: 24),
