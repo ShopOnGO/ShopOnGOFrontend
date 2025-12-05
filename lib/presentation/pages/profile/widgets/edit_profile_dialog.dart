@@ -10,12 +10,18 @@ class EditProfileDialog extends StatefulWidget {
 }
 
 class _EditProfileDialogState extends State<EditProfileDialog> {
+  final _formKey = GlobalKey<FormState>();
+
   late TextEditingController _nameController;
   final _oldPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
   bool _isPasswordSectionVisible = false;
+
+  bool _showOldPassword = false;
+  bool _showNewPassword = false;
+  bool _showConfirmPassword = false;
 
   @override
   void initState() {
@@ -39,43 +45,28 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
     final theme = Theme.of(context);
 
     if (_isPasswordSectionVisible) {
+      if (!_formKey.currentState!.validate()) {
+        return;
+      }
+
       final oldPass = _oldPasswordController.text;
       final newPass = _newPasswordController.text;
       final confirmPass = _confirmPasswordController.text;
-
-      if (oldPass.isEmpty || newPass.isEmpty || confirmPass.isEmpty) {
-        _showError(messenger, theme, 'Заполните все поля пароля');
-        return;
-      }
-
-      if (newPass != confirmPass) {
-        _showError(messenger, theme, 'Новые пароли не совпадают');
-        return;
-      }
-      
-      if (newPass.length < 6) {
-        _showError(messenger, theme, 'Пароль слишком короткий (минимум 6 символов)');
-        return;
-      }
 
       try {
         await authProvider.changePassword(oldPass, newPass, confirmPass);
         
         if (mounted) {
            _showSuccess(messenger, 'Пароль успешно изменен');
+           Navigator.of(context).pop();
         }
       } catch (e) {
         String msg = e.toString().replaceAll('Exception: ', '');
         if (mounted) {
           _showError(messenger, theme, msg);
         }
-        return;
       }
-    }
-
-    // TODO: Здесь будет вызов смены имени
-    
-    if (mounted) {
+    } else {
       Navigator.of(context).pop();
     }
   }
@@ -100,6 +91,39 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
     );
   }
 
+  InputDecoration _buildDecoration({
+    required String label,
+    required IconData icon,
+    required BuildContext context,
+    Widget? suffixIcon,
+  }) {
+    final theme = Theme.of(context);
+    final borderRadius = BorderRadius.circular(12);
+
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon),
+      suffixIcon: suffixIcon,
+      
+      enabledBorder: OutlineInputBorder(
+        borderRadius: borderRadius,
+        borderSide: BorderSide(color: theme.colorScheme.outline.withOpacity(0.5)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: borderRadius,
+        borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: borderRadius,
+        borderSide: BorderSide(color: theme.colorScheme.error, width: 1.5),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: borderRadius,
+        borderSide: BorderSide(color: theme.colorScheme.error, width: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -116,9 +140,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
               children: [
                 Card(
                   elevation: 24.0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                   child: Padding(
                     padding: const EdgeInsets.all(32.0),
                     child: Column(
@@ -127,9 +149,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                       children: [
                         Text(
                           'Редактирование профиля',
-                          style: textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 32),
@@ -145,13 +165,10 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                         TextField(
                           controller: _nameController,
                           enabled: !isLoading,
-                          decoration: InputDecoration(
-                            labelText: 'Имя',
-                            hintText: 'Как к вам обращаться',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            prefixIcon: const Icon(Icons.person_outline),
+                          decoration: _buildDecoration(
+                            label: 'Имя',
+                            icon: Icons.person_outline,
+                            context: context,
                           ),
                         ),
                         
@@ -186,48 +203,75 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                         
                         AnimatedCrossFade(
                           firstChild: Container(),
-                          secondChild: Column(
-                            children: [
-                              const SizedBox(height: 16),
-                              TextField(
-                                controller: _oldPasswordController,
-                                obscureText: true,
-                                enabled: !isLoading,
-                                decoration: InputDecoration(
-                                  labelText: 'Текущий пароль',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                          secondChild: Form(
+                            key: _formKey,
+                            autovalidateMode: AutovalidateMode.onUserInteraction,
+                            child: Column(
+                              children: [
+                                const SizedBox(height: 16),
+                                
+                                TextFormField(
+                                  controller: _oldPasswordController,
+                                  obscureText: !_showOldPassword,
+                                  enabled: !isLoading,
+                                  decoration: _buildDecoration(
+                                    label: 'Текущий пароль',
+                                    icon: Icons.lock_outline,
+                                    context: context,
+                                    suffixIcon: IconButton(
+                                      icon: Icon(_showOldPassword ? Icons.visibility : Icons.visibility_off),
+                                      onPressed: () => setState(() => _showOldPassword = !_showOldPassword),
+                                    ),
                                   ),
-                                  prefixIcon: const Icon(Icons.lock_outline),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) return 'Введите текущий пароль';
+                                    return null;
+                                  },
                                 ),
-                              ),
-                              const SizedBox(height: 12),
-                              TextField(
-                                controller: _newPasswordController,
-                                obscureText: true,
-                                enabled: !isLoading,
-                                decoration: InputDecoration(
-                                  labelText: 'Новый пароль',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                const SizedBox(height: 12),
+                                
+                                TextFormField(
+                                  controller: _newPasswordController,
+                                  obscureText: !_showNewPassword,
+                                  enabled: !isLoading,
+                                  decoration: _buildDecoration(
+                                    label: 'Новый пароль',
+                                    icon: Icons.vpn_key_outlined,
+                                    context: context,
+                                    suffixIcon: IconButton(
+                                      icon: Icon(_showNewPassword ? Icons.visibility : Icons.visibility_off),
+                                      onPressed: () => setState(() => _showNewPassword = !_showNewPassword),
+                                    ),
                                   ),
-                                  prefixIcon: const Icon(Icons.vpn_key_outlined),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) return 'Придумайте новый пароль';
+                                    if (value.length < 6) return 'Пароль слишком короткий (минимум 6 символов)';
+                                    return null;
+                                  },
                                 ),
-                              ),
-                              const SizedBox(height: 12),
-                              TextField(
-                                controller: _confirmPasswordController,
-                                obscureText: true,
-                                enabled: !isLoading,
-                                decoration: InputDecoration(
-                                  labelText: 'Повторите новый пароль',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                const SizedBox(height: 12),
+                                
+                                TextFormField(
+                                  controller: _confirmPasswordController,
+                                  obscureText: !_showConfirmPassword,
+                                  enabled: !isLoading,
+                                  decoration: _buildDecoration(
+                                    label: 'Повторите новый пароль',
+                                    icon: Icons.check_circle_outline,
+                                    context: context,
+                                    suffixIcon: IconButton(
+                                      icon: Icon(_showConfirmPassword ? Icons.visibility : Icons.visibility_off),
+                                      onPressed: () => setState(() => _showConfirmPassword = !_showConfirmPassword),
+                                    ),
                                   ),
-                                  prefixIcon: const Icon(Icons.check_circle_outline),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) return 'Повторите пароль';
+                                    if (value != _newPasswordController.text) return 'Пароли не совпадают';
+                                    return null;
+                                  },
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                           crossFadeState: _isPasswordSectionVisible
                               ? CrossFadeState.showSecond
@@ -294,17 +338,10 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                           shape: BoxShape.circle,
                           color: theme.colorScheme.surface,
                           boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
-                              blurRadius: 4,
-                            )
+                            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4)
                           ],
                         ),
-                        child: Icon(
-                          Icons.close,
-                          size: 20,
-                          color: theme.colorScheme.onSurface,
-                        ),
+                        child: Icon(Icons.close, size: 20, color: theme.colorScheme.onSurface),
                       ),
                     ),
                   ),

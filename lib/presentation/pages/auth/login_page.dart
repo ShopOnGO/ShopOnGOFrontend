@@ -12,10 +12,17 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final _formKey = GlobalKey<FormState>();
+  
   bool _isLoginMode = true;
+  
+  bool _isPasswordVisible = false;
+
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
+
+  final _emailRegex = RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
 
   @override
   void dispose() {
@@ -26,20 +33,12 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
     final authProvider = context.read<AuthProvider>();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final name = _nameController.text.trim();
-
-    if (email.isEmpty || password.isEmpty) {
-      _showError('Заполните Email и пароль');
-      return;
-    }
-
-    if (!_isLoginMode && name.isEmpty) {
-      _showError('Введите ваше имя');
-      return;
-    }
 
     try {
       if (_isLoginMode) {
@@ -59,6 +58,40 @@ class _LoginPageState extends State<LoginPage> {
       SnackBar(
         content: Text(message),
         backgroundColor: Theme.of(context).colorScheme.error,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  InputDecoration _buildDecoration({
+    required String label,
+    required IconData icon,
+    required BuildContext context,
+    Widget? suffixIcon,
+  }) {
+    final theme = Theme.of(context);
+    final borderRadius = BorderRadius.circular(12);
+
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon),
+      suffixIcon: suffixIcon,
+      
+      enabledBorder: OutlineInputBorder(
+        borderRadius: borderRadius,
+        borderSide: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.5)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: borderRadius,
+        borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: borderRadius,
+        borderSide: BorderSide(color: theme.colorScheme.error, width: 1.5),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: borderRadius,
+        borderSide: BorderSide(color: theme.colorScheme.error, width: 2),
       ),
     );
   }
@@ -79,104 +112,127 @@ class _LoginPageState extends State<LoginPage> {
               elevation: 24.0,
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 16),
-                    Text(
-                      _isLoginMode ? 'Вход в аккаунт' : 'Регистрация',
-                      textAlign: TextAlign.center,
-                      style: textTheme.headlineSmall,
-                    ),
-                    const SizedBox(height: 24),
-                    if (!_isLoginMode) ...[
-                      TextField(
-                        controller: _nameController,
-                        textCapitalization: TextCapitalization.words,
-                        decoration: InputDecoration(
-                          labelText: 'Имя',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                child: Form(
+                  key: _formKey,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 16),
+                      Text(
+                        _isLoginMode ? 'Вход в аккаунт' : 'Регистрация',
+                        textAlign: TextAlign.center,
+                        style: textTheme.headlineSmall,
+                      ),
+                      const SizedBox(height: 24),
+                      
+                      if (!_isLoginMode) ...[
+                        TextFormField(
+                          controller: _nameController,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: _buildDecoration(
+                            label: 'Имя',
+                            icon: Icons.person_outline,
+                            context: context,
                           ),
-                          prefixIcon: const Icon(Icons.person_outline),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Пожалуйста, введите имя';
+                            }
+                            return null;
+                          },
                         ),
+                        const SizedBox(height: 16),
+                      ],
+
+                      TextFormField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: _buildDecoration(
+                          label: 'Email',
+                          icon: Icons.email_outlined,
+                          context: context,
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) return 'Введите Email';
+                          if (!_emailRegex.hasMatch(value.trim())) return 'Некорректный формат Email';
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 16),
+
+                      TextFormField(
+                        controller: _passwordController,
+                        obscureText: !_isPasswordVisible, 
+                        decoration: _buildDecoration(
+                          label: 'Пароль',
+                          icon: Icons.lock_outline,
+                          context: context,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _isPasswordVisible 
+                                ? Icons.visibility 
+                                : Icons.visibility_off,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _isPasswordVisible = !_isPasswordVisible;
+                              });
+                            },
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) return 'Введите пароль';
+                          if (!_isLoginMode && value.length < 6) return 'Минимум 6 символов';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 24),
+
+                      ElevatedButton(
+                        onPressed: authProvider.isLoading ? null : _submit,
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: theme.colorScheme.primary,
+                          foregroundColor: theme.colorScheme.onPrimary,
+                        ),
+                        child: authProvider.isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              )
+                            : Text(_isLoginMode ? 'ВОЙТИ' : 'ЗАРЕГИСТРИРОВАТЬСЯ'),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          const Expanded(child: Divider()),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: Text('или', style: textTheme.bodySmall),
+                          ),
+                          const Expanded(child: Divider()),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: () {
+                          _formKey.currentState?.reset();
+                          setState(() {
+                            _isLoginMode = !_isLoginMode;
+                            _isPasswordVisible = false;
+                          });
+                        },
+                        child: Text(_isLoginMode ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти'),
+                      ),
                     ],
-
-                    TextField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: InputDecoration(
-                        labelText: 'Email',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        prefixIcon: const Icon(Icons.email_outlined),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _passwordController,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        labelText: 'Пароль',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        prefixIcon: const Icon(Icons.lock_outline),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    ElevatedButton(
-                      onPressed: authProvider.isLoading ? null : _submit,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: theme.colorScheme.primary,
-                        foregroundColor: theme.colorScheme.onPrimary,
-                      ),
-                      child: authProvider.isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : Text(_isLoginMode ? 'ВОЙТИ' : 'ЗАРЕГИСТРИРОВАТЬСЯ'),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        const Expanded(child: Divider()),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: Text('или', style: textTheme.bodySmall),
-                        ),
-                        const Expanded(child: Divider()),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _isLoginMode = !_isLoginMode;
-                        });
-                      },
-                      child: Text(
-                        _isLoginMode
-                            ? 'Нет аккаунта? Зарегистрироваться'
-                            : 'Уже есть аккаунт? Войти',
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
-            Positioned(
+             Positioned(
               top: 8,
               right: 8,
               child: Material(
