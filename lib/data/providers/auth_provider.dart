@@ -44,9 +44,14 @@ class AuthProvider with ChangeNotifier {
   Future<void> login(String email, String password) async {
     _setLoading(true);
     try {
-      final token = await _authService.login(email, password);
+      final responseData = await _authService.login(email, password);
+      
+      final token = responseData['token'];
+      final name = responseData['name']; 
+
       _printDecodedToken(token, 'LOGIN');
-      await _saveAuthData(token, email: email);
+      
+      await _saveAuthData(token, email: email, name: name);
     } catch (e) {
       rethrow;
     } finally {
@@ -57,9 +62,14 @@ class AuthProvider with ChangeNotifier {
   Future<void> register(String email, String password, String name) async {
     _setLoading(true);
     try {
-      final token = await _authService.register(email, password, name);
+      final responseData = await _authService.register(email, password, name);
+      
+      final token = responseData['token'];
+      final returnedName = responseData['name'];
+
       _printDecodedToken(token, 'REGISTER');
-      await _saveAuthData(token, email: email, name: name);
+      
+      await _saveAuthData(token, email: email, name: returnedName ?? name);
     } catch (e) {
       rethrow;
     } finally {
@@ -80,9 +90,6 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  /// ----------------------------
-  /// 🔐 Смена пароля (исправленная)
-  /// ----------------------------
   Future<void> changePassword(
     String oldPassword,
     String newPassword,
@@ -116,7 +123,10 @@ class AuthProvider with ChangeNotifier {
     
     if (email != null) decodedToken['email'] = email;
     
-    String? finalName = decodedToken['name'] ?? decodedToken['username'] ?? name ?? prefs.getString('user_name');
+    String? finalName = name ?? 
+                        decodedToken['name'] ?? 
+                        decodedToken['username'] ?? 
+                        prefs.getString('user_name');
 
     _user = User.fromTokenPayload(decodedToken, name: finalName);
 
@@ -130,8 +140,8 @@ class AuthProvider with ChangeNotifier {
       await prefs.setString('user_email', decodedToken['email']);
     }
     
-    if (_user?.name != null) {
-      await prefs.setString('user_name', _user!.name!);
+    if (finalName != null) {
+      await prefs.setString('user_name', finalName);
     }
 
     notifyListeners();

@@ -9,8 +9,8 @@ import '../presentation/pages/main/main_page.dart';
 import '../presentation/pages/product_detail/product_detail_page.dart';
 import '../presentation/pages/profile/profile_page.dart';
 import '../presentation/widgets/top_navbar.dart';
-import '../presentation/pages/auth/login_page.dart'; // ← Оставьте это
-import '../presentation/pages/chat/chat_overlay.dart'; // ← Добавьте это
+import '../presentation/pages/auth/login_page.dart';
+import '../presentation/pages/chat/chat_overlay.dart';
 
 class DashboardPage extends StatefulWidget {
   final VoidCallback toggleTheme;
@@ -77,7 +77,6 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   void _onSearchChanged(String query) {
-    // Можно оставить пустым или добавить логику
   }
 
   void _onSearchSubmitted() {
@@ -183,7 +182,6 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ),
 
-          // Чат оверлей - НОВЫЙ ВИДЖЕТ ИЗ ВЕТКИ chat_widget
           Positioned(
             right: 24.0,
             bottom: 24.0,

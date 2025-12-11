@@ -24,12 +24,20 @@ class ProductService {
     const String query = r'''
       query Search($in: SearchInput!) {
         searchProducts(input: $in) {
+          total
+          page
+          limit
+          pages
           products {
             id
             name
             description
+            material
             category_id
             brand_id
+            is_active
+            image_urls
+            video_urls
             variants {
               variant_id
               sku
@@ -38,6 +46,7 @@ class ProductService {
               colors
               stock
               rating
+              image_urls
             }
           }
         }
@@ -108,8 +117,6 @@ class ProductService {
   }
 
   Product _mapGraphqlProduct(Map<String, dynamic> json) {
-    var variantList = json['variants'] as List? ?? [];
-    
     int productId = 0;
     if (json['id'] is int) {
       productId = json['id'];
@@ -117,18 +124,31 @@ class ProductService {
       productId = int.tryParse(json['id']) ?? 0;
     }
 
+    List<String> productImages = [];
+    if (json['image_urls'] != null && json['image_urls'] is List) {
+      productImages = (json['image_urls'] as List)
+          .map((e) => e.toString())
+          .toList();
+    }
+
+    var variantList = json['variants'] as List? ?? [];
+    
     List<ProductVariant> variants = variantList.map((v) {
       int vId = 0;
       if (v['variant_id'] != null) {
-        if (v['variant_id'] is int) {
-          vId = v['variant_id'];
-        } else if (v['variant_id'] is String) {
-          vId = int.tryParse(v['variant_id']) ?? 0;
-        }
+         vId = v['variant_id'] is int ? v['variant_id'] : int.tryParse(v['variant_id'].toString()) ?? 0;
       }
 
-      String seed = vId > 0 ? vId.toString() : productId.toString();
-      List<String> images = ['https://picsum.photos/seed/$seed/400/600'];
+      List<String> variantImages = [];
+      if (v['image_urls'] != null && v['image_urls'] is List) {
+        variantImages = (v['image_urls'] as List)
+            .map((e) => e.toString())
+            .toList();
+      }
+
+      if (variantImages.isEmpty) {
+        variantImages = List.from(productImages);
+      }
 
       String colorStr = v['colors']?.toString() ?? '';
       colorStr = colorStr.replaceAll('[', '').replaceAll(']', '').replaceAll('"', '');
@@ -141,7 +161,7 @@ class ProductService {
         sizes: v['sizes']?.toString() ?? '',
         colors: colorStr,
         stock: (v['stock'] ?? 0) is int ? v['stock'] : 0,
-        imageURLs: images, 
+        imageURLs: variantImages,
         barcode: '',
         dimensions: '',
         discount: 0.0,
@@ -160,11 +180,16 @@ class ProductService {
     final categoryId = json['category_id'] is int ? json['category_id'] : 0;
     String brandName = _brandsCache[brandId] ?? 'Бренд #$brandId';
 
+    List<String> videoURLs = [];
+    if (json['video_urls'] != null && json['video_urls'] is List) {
+      videoURLs = (json['video_urls'] as List).map((e) => e.toString()).toList();
+    }
+
     return Product(
       id: productId,
       name: json['name'] ?? 'Без названия',
       description: json['description'] ?? '',
-      imageURLs: variants.isNotEmpty ? variants.first.imageURLs : [],
+      imageURLs: productImages,
       brand: Brand(
         id: brandId,
         name: brandName,
@@ -179,8 +204,8 @@ class ProductService {
         imageUrl: '',
       ),
       variants: variants,
-      isActive: true,
-      videoURLs: [],
+      isActive: json['is_active'] ?? true,
+      videoURLs: videoURLs,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );

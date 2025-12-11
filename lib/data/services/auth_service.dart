@@ -4,7 +4,7 @@ import '../config/api_config.dart';
 
 class AuthService {
   
-  Future<String> login(String email, String password) async {
+  Future<Map<String, dynamic>> login(String email, String password) async {
     final url = Uri.parse(ApiConfig.loginEndpoint);
 
     try {
@@ -16,7 +16,10 @@ class AuthService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return data['token'];
+        return {
+          'token': data['token'],
+          'name': data['name'], 
+        };
       } else {
         try {
           final decoded = jsonDecode(response.body);
@@ -30,7 +33,7 @@ class AuthService {
     }
   }
 
-  Future<String> register(String email, String password, String name) async {
+  Future<Map<String, dynamic>> register(String email, String password, String name) async {
     final url = Uri.parse(ApiConfig.registerEndpoint);
 
     try {
@@ -42,7 +45,10 @@ class AuthService {
 
       if (response.statusCode == 201) {
         final data = jsonDecode(response.body);
-        return data['token'];
+        return {
+          'token': data['token'],
+          'name': data['name'] ?? name, 
+        };
       } else {
         try {
           final decoded = jsonDecode(response.body);
@@ -56,9 +62,6 @@ class AuthService {
     }
   }
 
-  /// ----------------------------
-  /// 🔐 Смена пароля (исправленная)
-  /// ----------------------------
   Future<void> changePassword(
     String token,
     String oldPassword,
