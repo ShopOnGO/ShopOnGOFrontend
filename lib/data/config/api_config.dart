@@ -6,11 +6,18 @@ class ApiConfig {
 
   static const String loginEndpoint = '$_authBaseUrl/auth/login';
   static const String registerEndpoint = '$_authBaseUrl/auth/register';
-  static const String changePasswordEndpoint = '$_authBaseUrl/auth/change/password';
+  static const String changePasswordEndpoint =
+      '$_authBaseUrl/auth/change/password';
 
-  static const String brandsEndpoint = '$_productBaseUrl/product-service/brands/';
+  static const String resetRequestEndpoint = '$_authBaseUrl/auth/reset';
+  static const String resetVerifyEndpoint = '$_authBaseUrl/auth/reset/verify';
+  static const String resetConfirmEndpoint =
+      '$_authBaseUrl/auth/reset/password';
+  static const String resetResendEndpoint = '$_authBaseUrl/auth/reset/resend';
+
+  static const String brandsEndpoint =
+      '$_productBaseUrl/product-service/brands/';
 
   static const String graphqlUrl = '$_searchBaseUrl/search';
-
   static const String mediaBaseUrl = '$_mediaBaseUrl/media/';
 }

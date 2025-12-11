@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import '../../data/models/brand.dart';
 
 class FilterPanel extends StatefulWidget {
   final Function(RangeValues range, int? brandId)? onApply;
+  final List<Brand> brands;
 
   const FilterPanel({
     super.key,
     this.onApply,
+    this.brands = const [],
   });
 
   @override
@@ -13,7 +16,7 @@ class FilterPanel extends StatefulWidget {
 }
 
 class _FilterPanelState extends State<FilterPanel> {
-  RangeValues _currentRangeValues = const RangeValues(0, 300);
+  RangeValues _currentRangeValues = const RangeValues(0, 500);
   int? _selectedBrandId;
 
   @override
@@ -55,12 +58,12 @@ class _FilterPanelState extends State<FilterPanel> {
             RangeSlider(
               values: _currentRangeValues,
               min: 0,
-              max: 300,
-              divisions: 30,
+              max: 500,
+              divisions: 50,
               activeColor: colorScheme.primary,
               labels: RangeLabels(
-                '${_currentRangeValues.start.round()} BYN',
-                '${_currentRangeValues.end.round()} BYN'
+                '${_currentRangeValues.start.round()}',
+                '${_currentRangeValues.end.round()}'
               ),
               onChanged: (RangeValues values) {
                 setState(() {
@@ -76,19 +79,20 @@ class _FilterPanelState extends State<FilterPanel> {
             
             ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 150),
-              child: SingleChildScrollView(
+              child: widget.brands.isEmpty 
+              ? const Center(child: Text('Бренды не загружены'))
+              : SingleChildScrollView(
                 child: Wrap(
                   spacing: 8.0,
                   runSpacing: 8.0,
-                  children: List.generate(10, (index) {
-                    final brandId = index + 1;
-                    final isSelected = _selectedBrandId == brandId;
+                  children: widget.brands.map((brand) {
+                    final isSelected = _selectedBrandId == brand.id;
                     return ChoiceChip(
-                      label: Text('Бренд #$brandId'),
+                      label: Text(brand.name),
                       selected: isSelected,
                       onSelected: (bool selected) {
                         setState(() {
-                          _selectedBrandId = selected ? brandId : null;
+                          _selectedBrandId = selected ? brand.id : null;
                         });
                       },
                       selectedColor: colorScheme.primary,
@@ -97,12 +101,13 @@ class _FilterPanelState extends State<FilterPanel> {
                         color: isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
                       ),
                     );
-                  }),
+                  }).toList(),
                 ),
               ),
             ),
 
             const SizedBox(height: 24),
+            
             ElevatedButton(
               onPressed: () {
                 widget.onApply?.call(_currentRangeValues, _selectedBrandId);

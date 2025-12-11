@@ -10,13 +10,43 @@ class ProductService {
   
   static Map<int, String> _brandsCache = {};
 
-  Future<List<Product>> fetchProducts() async {
-    final results = await Future.wait([
-      _performSearchQuery(),
-      _ensureBrandsLoaded(),
-    ]);
+  Future<List<Brand>> getAllBrands() async {
+    final uri = Uri.parse(ApiConfig.brandsEndpoint);
+    print('GET BRANDS URL: $uri');
 
-    final rawList = results[0] as List<Product>;
+    try {
+      final response = await http.get(uri);
+      
+      print('GET BRANDS STATUS: ${response.statusCode}');
+      print('GET BRANDS BODY: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final List<dynamic> brandsJson = json.decode(utf8.decode(response.bodyBytes));
+        List<Brand> brands = brandsJson.map((json) => Brand.fromJson(json)).toList();
+        
+        for (var b in brands) {
+          _brandsCache[b.id] = b.name;
+        }
+        
+        print('SUCCESS: Parsed ${brands.length} brands');
+        return brands;
+      } else {
+        print('Failed to load brands: ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      print('Error fetching brands list: $e');
+      return [];
+    }
+  }
+
+
+
+  Future<List<Product>> fetchProducts() async {
+    await _ensureBrandsLoaded();
+
+    final rawList = await _performSearchQuery();
+    
     return rawList.where((p) => p.variants.isNotEmpty).toList();
   }
 
@@ -24,10 +54,6 @@ class ProductService {
     const String query = r'''
       query Search($in: SearchInput!) {
         searchProducts(input: $in) {
-          total
-          page
-          limit
-          pages
           products {
             id
             name
@@ -100,20 +126,7 @@ class ProductService {
 
   Future<void> _ensureBrandsLoaded() async {
     if (_brandsCache.isNotEmpty) return;
-    try {
-      final response = await http.get(Uri.parse(ApiConfig.brandsEndpoint));
-      if (response.statusCode == 200) {
-        final List<dynamic> brandsJson = json.decode(utf8.decode(response.bodyBytes));
-        for (var b in brandsJson) {
-          if (b['id'] != null && b['name'] != null) {
-            _brandsCache[b['id']] = b['name'];
-          }
-        }
-        print('SUCCESS: Loaded ${_brandsCache.length} brands.');
-      }
-    } catch (e) {
-      print('Error fetching brands: $e');
-    }
+    await getAllBrands();
   }
 
   Product _mapGraphqlProduct(Map<String, dynamic> json) {
@@ -126,13 +139,10 @@ class ProductService {
 
     List<String> productImages = [];
     if (json['image_urls'] != null && json['image_urls'] is List) {
-      productImages = (json['image_urls'] as List)
-          .map((e) => e.toString())
-          .toList();
+      productImages = (json['image_urls'] as List).map((e) => e.toString()).toList();
     }
 
     var variantList = json['variants'] as List? ?? [];
-    
     List<ProductVariant> variants = variantList.map((v) {
       int vId = 0;
       if (v['variant_id'] != null) {
@@ -141,11 +151,8 @@ class ProductService {
 
       List<String> variantImages = [];
       if (v['image_urls'] != null && v['image_urls'] is List) {
-        variantImages = (v['image_urls'] as List)
-            .map((e) => e.toString())
-            .toList();
+        variantImages = (v['image_urls'] as List).map((e) => e.toString()).toList();
       }
-
       if (variantImages.isEmpty) {
         variantImages = List.from(productImages);
       }

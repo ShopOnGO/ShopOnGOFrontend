@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/product.dart';
+import '../../../data/models/brand.dart';
 import '../../../data/services/product_service.dart';
 import '../../widgets/filter_panel.dart';
 import '../../widgets/product_grid.dart';
@@ -39,7 +40,8 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
   final ProductService _productService = ProductService();
   
   List<Product> _allProducts = [];       
-  List<Product> _filteredProducts = [];  
+  List<Product> _filteredProducts = [];
+  List<Brand> _brands = [];
   bool _isLoading = true;
 
   @override
@@ -74,10 +76,15 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      final products = await _productService.fetchProducts();
+      final results = await Future.wait([
+        _productService.fetchProducts(),
+        _productService.getAllBrands(),
+      ]);
+
       if (mounted) {
         setState(() {
-          _allProducts = products;
+          _allProducts = results[0] as List<Product>;
+          _brands = results[1] as List<Brand>;
           _isLoading = false;
         });
         _runFilter();
@@ -157,7 +164,10 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
                     parent: _animationController,
                     curve: Curves.fastOutSlowIn,
                   ),
-                  child: FilterPanel(onApply: _onApplyFiltersLocal),
+                  child: FilterPanel(
+                    brands: _brands,
+                    onApply: _onApplyFiltersLocal,
+                  ),
                 ),
               ),
 
