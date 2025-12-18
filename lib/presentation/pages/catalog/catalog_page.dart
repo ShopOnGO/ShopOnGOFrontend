@@ -53,7 +53,6 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
     );
 
     widget.searchController.addListener(_onSearchChangedLocal);
-
     _loadData();
   }
 
@@ -90,7 +89,7 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
         _runFilter();
       }
     } catch (e) {
-      print("Error loading catalog: $e");
+      debugPrint("Error loading catalog: $e");
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -166,6 +165,8 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
                   ),
                   child: FilterPanel(
                     brands: _brands,
+                    initialBrandId: widget.selectedBrandId,
+                    initialRange: widget.priceRange,
                     onApply: _onApplyFiltersLocal,
                   ),
                 ),

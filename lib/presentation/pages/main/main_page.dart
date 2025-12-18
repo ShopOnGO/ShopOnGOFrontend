@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/product.dart';
+import '../../../data/models/brand.dart';
 import '../../../data/services/product_service.dart';
 import '../../widgets/filter_panel.dart';
 import '../../widgets/product_grid.dart';
@@ -33,6 +34,7 @@ class _MainPageState extends State<MainPage> with SingleTickerProviderStateMixin
 
   final ProductService _productService = ProductService();
   List<Product> _products = [];
+  List<Brand> _brands = [];
   bool _isLoading = true;
 
   @override
@@ -54,15 +56,20 @@ class _MainPageState extends State<MainPage> with SingleTickerProviderStateMixin
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      final products = await _productService.fetchProducts();
+      final results = await Future.wait([
+        _productService.fetchProducts(),
+        _productService.getAllBrands(),
+      ]);
+
       if (mounted) {
         setState(() {
-          _products = products;
+          _products = results[0] as List<Product>;
+          _brands = results[1] as List<Brand>;
           _isLoading = false;
         });
       }
     } catch (e) {
-      print("Error loading main page: $e");
+      debugPrint("Error loading main page: $e");
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -100,7 +107,10 @@ class _MainPageState extends State<MainPage> with SingleTickerProviderStateMixin
                     parent: _animationController,
                     curve: Curves.fastOutSlowIn,
                   ),
-                  child: FilterPanel(onApply: _handleFilterApply),
+                  child: FilterPanel(
+                    brands: _brands,
+                    onApply: _handleFilterApply,
+                  ),
                 ),
               ),
               CustomSearchBar(

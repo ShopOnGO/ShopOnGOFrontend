@@ -1,9 +1,9 @@
-// ignore_for_file: avoid_print
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../data/models/product.dart';
+import '../../../data/models/brand.dart';
 import '../../../data/providers/liked_provider.dart';
+import '../../../data/services/product_service.dart';
 import '../../widgets/filter_panel.dart';
 import '../../widgets/product_grid.dart';
 import '../../widgets/search_bar.dart';
@@ -21,12 +21,14 @@ class _LikedPageState extends State<LikedPage>
     with SingleTickerProviderStateMixin {
   late final TextEditingController _searchController;
   late final AnimationController _animationController;
+  final ProductService _productService = ProductService();
 
   String _searchQuery = '';
   bool _isFilterPanelVisible = false;
 
-  RangeValues _priceRange = const RangeValues(0, 300);
+  RangeValues _priceRange = const RangeValues(0, 500);
   int? _selectedBrandId;
+  List<Brand> _brands = [];
 
   @override
   void initState() {
@@ -38,6 +40,16 @@ class _LikedPageState extends State<LikedPage>
       vsync: this,
       duration: const Duration(milliseconds: 250),
     );
+    _loadBrands();
+  }
+
+  Future<void> _loadBrands() async {
+    final brands = await _productService.getAllBrands();
+    if (mounted) {
+      setState(() {
+        _brands = brands;
+      });
+    }
   }
 
   @override
@@ -64,7 +76,7 @@ class _LikedPageState extends State<LikedPage>
   }
 
   void _onSearchSubmitted() {
-    print("Search submitted on LikedPage: $_searchQuery");
+    debugPrint("Search submitted on LikedPage: $_searchQuery");
   }
 
   void _toggleFilterPanel() {
@@ -132,7 +144,12 @@ class _LikedPageState extends State<LikedPage>
                     parent: _animationController,
                     curve: Curves.fastOutSlowIn,
                   ),
-                  child: FilterPanel(onApply: _applyFilterAndClose),
+                  child: FilterPanel(
+                    brands: _brands,
+                    initialBrandId: _selectedBrandId,
+                    initialRange: _priceRange,
+                    onApply: _applyFilterAndClose,
+                  ),
                 ),
               ),
               CustomSearchBar(
