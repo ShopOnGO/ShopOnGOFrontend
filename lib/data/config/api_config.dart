@@ -4,11 +4,9 @@ class ApiConfig {
   static const String _mediaBaseUrl = 'http://localhost:8084';
   static const String _searchBaseUrl = 'http://localhost:8085';
 
-  // WebSocket URL
   static const String wsChatUrl = 'ws://localhost:8081/ws/chat';
   
-  // Эндпоинт для загрузки файлов именно для чата (согласно уточнению бэка)
-  static const String chatUploadEndpoint = '$_authBaseUrl/api/chat/upload';
+  static const String mediaUploadEndpoint = 'http://localhost:80/media-service/uploads';
 
   static const String loginEndpoint = '$_authBaseUrl/auth/login';
   static const String registerEndpoint = '$_authBaseUrl/auth/register';

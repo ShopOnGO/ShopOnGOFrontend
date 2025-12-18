@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../../../data/providers/chat_provider.dart';
 import 'chat_message_bubble.dart';
 
@@ -21,7 +22,6 @@ class _ChatDetailViewState extends State<ChatDetailView> {
     super.dispose();
   }
 
-  // Метод для плавной прокрутки вниз
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -37,11 +37,32 @@ class _ChatDetailViewState extends State<ChatDetailView> {
   void _handleSend() {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
-
     context.read<ChatProvider>().sendMessage(text: text);
     _controller.clear();
-    // Прокручиваем сразу после отправки
     _scrollToBottom();
+  }
+
+  Future<void> _handlePickFile() async {
+    print(">>> [UI] Opening file picker...");
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      withData: true,
+    );
+
+    if (!mounted) return;
+
+    if (result != null && result.files.first.bytes != null) {
+      final file = result.files.first;
+      print(">>> [UI] File selected: ${file.name}, size: ${file.size}");
+      
+      await context.read<ChatProvider>().uploadAndSendImage(
+        file.bytes!, 
+        file.name,
+      );
+      _scrollToBottom();
+    } else {
+      print(">>> [UI] File picker cancelled or failed");
+    }
   }
 
   @override
@@ -49,9 +70,12 @@ class _ChatDetailViewState extends State<ChatDetailView> {
     final chatProvider = context.watch<ChatProvider>();
     final theme = Theme.of(context);
 
-    // Если пришли новые сообщения, прокручиваем вниз
     if (chatProvider.messages.isNotEmpty) {
-      _scrollToBottom();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+        }
+      });
     }
 
     String title = "Поддержка Tailornado";
@@ -71,6 +95,13 @@ class _ChatDetailViewState extends State<ChatDetailView> {
               const CircleAvatar(child: Icon(Icons.person)),
               const SizedBox(width: 12),
               Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+              const Spacer(),
+              if (chatProvider.isUploading)
+                const SizedBox(
+                  width: 20, 
+                  height: 20, 
+                  child: CircularProgressIndicator(strokeWidth: 2)
+                ),
             ],
           ),
         ),
@@ -79,7 +110,7 @@ class _ChatDetailViewState extends State<ChatDetailView> {
           child: chatProvider.messages.isEmpty
               ? const Center(child: Text("Сообщений нет", style: TextStyle(color: Colors.grey)))
               : ListView.builder(
-                  controller: _scrollController, // Привязываем контроллер
+                  controller: _scrollController,
                   padding: const EdgeInsets.all(16),
                   itemCount: chatProvider.messages.length,
                   itemBuilder: (context, index) => ChatMessageBubble(message: chatProvider.messages[index]),
@@ -91,8 +122,9 @@ class _ChatDetailViewState extends State<ChatDetailView> {
           child: Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.attach_file),
-                onPressed: () => print("File picker logic"),
+                icon: const Icon(Icons.image_outlined),
+                tooltip: "Отправить изображение",
+                onPressed: chatProvider.isUploading ? null : _handlePickFile,
               ),
               Expanded(
                 child: TextField(

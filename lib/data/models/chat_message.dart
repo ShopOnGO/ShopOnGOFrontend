@@ -6,7 +6,7 @@ class ChatMessage {
   final int? toId;
   final String? text;
   final String? imageUrl;
-  final String? type; // text, image, system
+  final String? type;
   final DateTime timestamp;
   final bool isSentByMe;
 
@@ -22,7 +22,6 @@ class ChatMessage {
   });
 
   factory ChatMessage.fromServerJson(Map<String, dynamic> json, int currentUserId) {
-    // Проверка на системное сообщение (статус от сервера)
     if (json.containsKey('status')) {
       return ChatMessage(
         text: "${json['message']}${json['payload'] != null ? ': ${json['payload']}' : ''}",
@@ -36,13 +35,21 @@ class ChatMessage {
     String? imgUrl;
     String contentType = json['type'] ?? "text";
 
-    try {
-      final innerContent = jsonDecode(json['content']);
-      contentText = innerContent['content'];
-      contentType = innerContent['type'] ?? "text";
-      if (contentType == "image") imgUrl = innerContent['content'];
-    } catch (_) {
-      contentText = json['content'];
+    if (contentType == "image") {
+      imgUrl = json['content'];
+    } else {
+      try {
+        final innerContent = jsonDecode(json['content']);
+        if (innerContent is Map) {
+          contentText = innerContent['content'];
+          contentType = innerContent['type'] ?? contentType;
+          if (contentType == "image") imgUrl = innerContent['content'];
+        } else {
+          contentText = json['content'];
+        }
+      } catch (_) {
+        contentText = json['content'];
+      }
     }
 
     return ChatMessage(
@@ -55,7 +62,6 @@ class ChatMessage {
       timestamp: json['created_at'] != null 
           ? DateTime.parse(json['created_at']) 
           : DateTime.now(),
-      // Сравниваем ID отправителя с ID текущего пользователя
       isSentByMe: json['from_id'] == currentUserId,
     );
   }

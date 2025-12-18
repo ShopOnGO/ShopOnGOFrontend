@@ -16,7 +16,7 @@ class ChatListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final chatProvider = context.watch<ChatProvider>();
-    final conversations = chatProvider.conversations; // Теперь геттер существует
+    final conversations = chatProvider.conversations;
     final theme = Theme.of(context);
 
     if (conversations.isEmpty) {
