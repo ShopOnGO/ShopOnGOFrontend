@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../../../data/providers/chat_provider.dart';
+import '../../../../core/utils/app_logger.dart';
 import 'chat_message_bubble.dart';
 
 class ChatDetailView extends StatefulWidget {
@@ -37,13 +38,14 @@ class _ChatDetailViewState extends State<ChatDetailView> {
   void _handleSend() {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
+    logger.d('Chat Detail: User sending message: $text');
     context.read<ChatProvider>().sendMessage(text: text);
     _controller.clear();
     _scrollToBottom();
   }
 
   Future<void> _handlePickFile() async {
-    print(">>> [UI] Opening file picker...");
+    logger.d("Chat UI: Opening file picker...");
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.image,
       withData: true,
@@ -53,15 +55,17 @@ class _ChatDetailViewState extends State<ChatDetailView> {
 
     if (result != null && result.files.first.bytes != null) {
       final file = result.files.first;
-      print(">>> [UI] File selected: ${file.name}, size: ${file.size}");
+      logger.i("Chat UI: File selected: ${file.name}, size: ${file.size}");
       
       await context.read<ChatProvider>().uploadAndSendImage(
         file.bytes!, 
         file.name,
       );
+      
+      if (!mounted) return;
       _scrollToBottom();
     } else {
-      print(">>> [UI] File picker cancelled or failed");
+      logger.w("Chat UI: File picker cancelled or failed");
     }
   }
 
@@ -105,7 +109,6 @@ class _ChatDetailViewState extends State<ChatDetailView> {
             ],
           ),
         ),
-
         Expanded(
           child: chatProvider.messages.isEmpty
               ? const Center(child: Text("Сообщений нет", style: TextStyle(color: Colors.grey)))
@@ -116,7 +119,6 @@ class _ChatDetailViewState extends State<ChatDetailView> {
                   itemBuilder: (context, index) => ChatMessageBubble(message: chatProvider.messages[index]),
                 ),
         ),
-
         Container(
           padding: const EdgeInsets.all(8),
           child: Row(

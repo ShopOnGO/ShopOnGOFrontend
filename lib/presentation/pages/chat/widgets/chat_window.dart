@@ -48,7 +48,7 @@ class _ChatWindowState extends State<ChatWindow> {
                           child: ChatFab(state: chatProvider.hasUnreadMessages ? MailboxState.hasUnread : MailboxState.closed),
                         ),
                         const SizedBox(width: 10),
-                        const Text('Управление', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const Text('Чаты', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                         const Spacer(),
                         _buildStatusIndicator(chatProvider.isConnected),
                       ],
@@ -145,7 +145,7 @@ class _ChatWindowState extends State<ChatWindow> {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: connected ? Colors.green : Colors.red,
-        boxShadow: [BoxShadow(color: (connected ? Colors.green : Colors.red).withOpacity(0.4), blurRadius: 6)],
+        boxShadow: [BoxShadow(color: (connected ? Colors.green : Colors.red).withValues(alpha: 0.4), blurRadius: 6)],
       ),
     );
   }

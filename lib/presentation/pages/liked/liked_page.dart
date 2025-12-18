@@ -4,6 +4,7 @@ import '../../../data/models/product.dart';
 import '../../../data/models/brand.dart';
 import '../../../data/providers/liked_provider.dart';
 import '../../../data/services/product_service.dart';
+import '../../../core/utils/app_logger.dart';
 import '../../widgets/filter_panel.dart';
 import '../../widgets/product_grid.dart';
 import '../../widgets/search_bar.dart';
@@ -76,7 +77,7 @@ class _LikedPageState extends State<LikedPage>
   }
 
   void _onSearchSubmitted() {
-    debugPrint("Search submitted on LikedPage: $_searchQuery");
+    logger.i("LikedPage: Search submitted for query: $_searchQuery");
   }
 
   void _toggleFilterPanel() {
@@ -91,6 +92,7 @@ class _LikedPageState extends State<LikedPage>
   }
 
   void _applyFilterAndClose(RangeValues range, int? brandId) {
+    logger.d("LikedPage: Applying filters - Price: $range, BrandID: $brandId");
     setState(() {
       _priceRange = range;
       _selectedBrandId = brandId;

@@ -5,6 +5,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import '../../core/utils/app_logger.dart';
 import '../models/chat_message.dart';
 import '../models/chat_conversation.dart';
 import '../config/api_config.dart';
@@ -20,7 +21,7 @@ class ChatProvider with ChangeNotifier {
 
   final String _managerToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjc3ODc5MzkxNzcsInJvbGUiOiJtYW5hZ2VyIiwidXNlcl9pZCI6Mn0.NqNyE0yIyyumue9DWJXHmmUfjbWo5xN7zmnXvr3k_vU";
 
-  List<ChatMessage> _messages = [];
+  final List<ChatMessage> _messages = [];
   bool _hasUnreadMessages = false;
   bool _isUploading = false;
 
@@ -48,7 +49,7 @@ class ChatProvider with ChangeNotifier {
   }
 
   void setManagerMode(bool value, String? userToken) {
-    print(">>> [CHAT] Mode Switch: Manager = $value");
+    logger.i('Chat: Switching Mode - ManagerMode = $value');
     _isManagerMode = value;
     _waitingUsers = [];
     _activeTargetUserId = null;
@@ -58,18 +59,26 @@ class ChatProvider with ChangeNotifier {
   }
 
   void connect(String? token) {
-    if (token == null || _isConnected) return;
+    if (token == null) {
+      logger.w('Chat: Connection aborted - Token is null');
+      return;
+    }
+    if (_isConnected) {
+      logger.d('Chat: Already connected, skipping...');
+      return;
+    }
+
     _currentToken = token;
     try {
       Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
       _currentUserId = int.tryParse(decodedToken['user_id'].toString());
-      print(">>> [CHAT] Current User ID: $_currentUserId");
+      logger.d('Chat: Connecting to WS as UserID: $_currentUserId');
     } catch (e) {
-      print(">>> [CHAT] JWT Decode Error: $e");
+      logger.e('Chat: Failed to decode JWT', error: e);
     }
 
     final wsUrl = "${ApiConfig.wsChatUrl}?token=$token";
-    print(">>> [CHAT] Connecting to: $wsUrl");
+    logger.d('Chat: WS URL - $wsUrl');
 
     try {
       _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
@@ -79,50 +88,56 @@ class ChatProvider with ChangeNotifier {
       _channel!.stream.listen(
         (data) => _onMessageReceived(data),
         onError: (err) { 
-          print(">>> [CHAT] WS Error: $err");
+          logger.e('Chat: WebSocket Stream Error', error: err);
           _isConnected = false; 
           notifyListeners(); 
         },
         onDone: () { 
-          print(">>> [CHAT] WS Connection Closed");
+          logger.i('Chat: WebSocket Connection Closed by Server');
           _isConnected = false; 
           notifyListeners(); 
         },
       );
       
       if (_isManagerMode) {
-        print(">>> [CHAT] Manager connected, requesting initial list...");
+        logger.d('Chat: Manager mode active, requesting user list');
         sendCommand("list");
       }
-    } catch (e) {
-      print(">>> [CHAT] Connection Exception: $e");
+    } catch (e, stackTrace) {
+      logger.e('Chat: WebSocket Connection Exception', error: e, stackTrace: stackTrace);
       _isConnected = false;
       notifyListeners();
     }
   }
 
   void _onMessageReceived(dynamic data) {
-    print(">>> [CHAT] Raw Data: $data");
+    logger.d('Chat: WS Incoming Raw Data: $data');
     try {
       final json = jsonDecode(data);
+      
       if (json['payload'] != null && json['payload'] is List) {
         _waitingUsers = List<int>.from(json['payload']);
-        print(">>> [CHAT] Waiting Users List Updated from Server: $_waitingUsers");
+        logger.i('Chat: Updated waiting users: $_waitingUsers');
         notifyListeners();
       }
+
       final message = ChatMessage.fromServerJson(json, _currentUserId ?? 0);
       _messages.add(message);
       _hasUnreadMessages = true;
+      logger.d('Chat: New message added. Count: ${_messages.length}');
       notifyListeners();
     } catch (e) {
-      print(">>> [CHAT] Parse Error: $e");
+      logger.e('Chat: Error parsing incoming message', error: e);
     }
   }
 
   Future<void> uploadAndSendImage(Uint8List bytes, String fileName) async {
-    if (!_isConnected) return;
+    if (!_isConnected) {
+      logger.w('Chat: Cannot upload, WS not connected');
+      return;
+    }
 
-    print(">>> [CHAT] Starting image upload to Media Service: $fileName");
+    logger.i('Chat: Starting image upload: $fileName');
     _isUploading = true;
     notifyListeners();
 
@@ -143,16 +158,13 @@ class ChatProvider with ChangeNotifier {
         request.headers['Authorization'] = 'Bearer $_currentToken';
       }
 
-      print(">>> [CHAT] Uploading to: $uri");
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
-
-      print(">>> [CHAT] Media Upload Status: ${response.statusCode}");
-      print(">>> [CHAT] Media Upload Response: ${response.body}");
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final String imageUrl = data['url'];
+        logger.i('Chat: Image uploaded. URL: $imageUrl');
 
         final socketPayload = {
           "content": imageUrl,
@@ -161,7 +173,6 @@ class ChatProvider with ChangeNotifier {
           if (_isManagerMode && _activeTargetUserId != null) "user_id": _activeTargetUserId,
         };
 
-        print(">>> [CHAT] Sending image URL to WebSocket: $socketPayload");
         _channel!.sink.add(jsonEncode(socketPayload));
         
         _messages.add(ChatMessage(
@@ -172,10 +183,10 @@ class ChatProvider with ChangeNotifier {
           fromId: _currentUserId,
         ));
       } else {
-        print(">>> [CHAT] Media Upload Failed: ${response.body}");
+        logger.e('Chat: Media Upload Failed. Status: ${response.statusCode}');
       }
-    } catch (e) {
-      print(">>> [CHAT] Image Upload Exception: $e");
+    } catch (e, stackTrace) {
+      logger.e('Chat: Exception during upload', error: e, stackTrace: stackTrace);
     } finally {
       _isUploading = false;
       notifyListeners();
@@ -184,29 +195,35 @@ class ChatProvider with ChangeNotifier {
 
   void sendCommand(String cmd, {int? targetId}) {
     if (!_isConnected) return;
+
     if (cmd == "take" && targetId != null) {
+      logger.i('Chat Manager: Taking user $targetId');
       _messages.clear();
       _activeTargetUserId = targetId;
-      print(">>> [CHAT] Taking user $targetId. Messages cleared.");
     } else if (cmd == "close") {
-      print(">>> [CHAT] Closing session with $_activeTargetUserId");
+      logger.i('Chat Manager: Closing session with $_activeTargetUserId');
       _activeTargetUserId = null;
     }
+
     final payload = { "command": cmd, if (targetId != null) "user_id": targetId };
-    print(">>> [CHAT] Sending Command: $payload");
     _channel!.sink.add(jsonEncode(payload));
     notifyListeners();
   }
 
   Future<void> sendMessage({required String text}) async {
-    if (!_isConnected || _channel == null) return;
+    if (!_isConnected || _channel == null) {
+      logger.w('Chat: Cannot send, not connected');
+      return;
+    }
+
     final payload = {
       "content": text,
       "type": "text",
       if (_isManagerMode && _activeTargetUserId != null) "user_id": _activeTargetUserId,
     };
-    print(">>> [CHAT] Sending Message: $payload");
+
     _channel!.sink.add(jsonEncode(payload));
+
     _messages.add(ChatMessage(
       text: text,
       timestamp: DateTime.now(),
@@ -218,7 +235,7 @@ class ChatProvider with ChangeNotifier {
   }
 
   void disconnect() {
-    print(">>> [CHAT] Disconnecting...");
+    logger.i('Chat: Disconnecting...');
     _channel?.sink.close();
     _channel = null;
     _isConnected = false;

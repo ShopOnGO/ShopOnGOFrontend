@@ -15,7 +15,6 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   
   bool _isLoginMode = true;
-  
   bool _isPasswordVisible = false;
 
   final _emailController = TextEditingController();
@@ -46,8 +45,11 @@ class _LoginPageState extends State<LoginPage> {
       } else {
         await authProvider.register(email, password, name);
       }
+      
+      if (!mounted) return;
       widget.onClose();
     } catch (e) {
+      if (!mounted) return;
       String message = e.toString().replaceAll('Exception: ', '');
       _showError(message);
     }
@@ -76,7 +78,6 @@ class _LoginPageState extends State<LoginPage> {
       labelText: label,
       prefixIcon: Icon(icon),
       suffixIcon: suffixIcon,
-      
       enabledBorder: OutlineInputBorder(
         borderRadius: borderRadius,
         borderSide: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.5)),
@@ -126,7 +127,6 @@ class _LoginPageState extends State<LoginPage> {
                         style: textTheme.headlineSmall,
                       ),
                       const SizedBox(height: 24),
-                      
                       if (!_isLoginMode) ...[
                         TextFormField(
                           controller: _nameController,
@@ -145,7 +145,6 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         const SizedBox(height: 16),
                       ],
-
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
@@ -161,7 +160,6 @@ class _LoginPageState extends State<LoginPage> {
                         },
                       ),
                       const SizedBox(height: 16),
-
                       TextFormField(
                         controller: _passwordController,
                         obscureText: !_isPasswordVisible, 
@@ -189,7 +187,6 @@ class _LoginPageState extends State<LoginPage> {
                         },
                       ),
                       const SizedBox(height: 24),
-
                       ElevatedButton(
                         onPressed: authProvider.isLoading ? null : _submit,
                         style: ElevatedButton.styleFrom(

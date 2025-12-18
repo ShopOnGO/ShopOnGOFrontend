@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/brand.dart';
 import '../../../data/services/product_service.dart';
@@ -34,6 +35,10 @@ class CatalogPage extends StatefulWidget {
 }
 
 class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStateMixin {
+  final Logger _logger = Logger(
+    printer: PrettyPrinter(methodCount: 0, colors: true, printEmojis: true),
+  );
+
   late AnimationController _animationController;
   bool _isFilterPanelVisible = false;
 
@@ -61,6 +66,7 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
     super.didUpdateWidget(oldWidget);
     if (oldWidget.priceRange != widget.priceRange || 
         oldWidget.selectedBrandId != widget.selectedBrandId) {
+      _logger.d('Filters updated via props. Re-running filter.');
       _runFilter();
     }
   }
@@ -73,6 +79,7 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
   }
 
   Future<void> _loadData() async {
+    _logger.i('Catalog: Loading initial products and brands...');
     setState(() => _isLoading = true);
     try {
       final results = await Future.wait([
@@ -86,10 +93,11 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
           _brands = results[1] as List<Brand>;
           _isLoading = false;
         });
+        _logger.i('Catalog: Data loaded. Total products: ${_allProducts.length}');
         _runFilter();
       }
-    } catch (e) {
-      debugPrint("Error loading catalog: $e");
+    } catch (e, stackTrace) {
+      _logger.e('Catalog: Failed to load data', error: e, stackTrace: stackTrace);
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -100,6 +108,7 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
   }
 
   void _onApplyFiltersLocal(RangeValues range, int? brandId) {
+    _logger.i('Catalog: Applying filters. Price: ${range.start}-${range.end}, BrandID: $brandId');
     widget.onApplyFilters?.call(range, brandId);
     _toggleFilterPanel();
   }
@@ -108,6 +117,7 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
     if (_allProducts.isEmpty) return;
 
     final queryLower = widget.searchController.text.toLowerCase().trim();
+    _logger.d('Catalog: Running filter logic for query: "$queryLower"');
 
     setState(() {
       _filteredProducts = _allProducts.where((product) {
@@ -133,11 +143,14 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
         return true;
       }).toList();
     });
+    
+    _logger.d('Catalog: Filtering done. Items found: ${_filteredProducts.length}');
   }
 
   void _toggleFilterPanel() {
     setState(() {
       _isFilterPanelVisible = !_isFilterPanelVisible;
+      _logger.d('Catalog: Filter panel visibility = $_isFilterPanelVisible');
       if (_isFilterPanelVisible) {
         _animationController.forward();
       } else {

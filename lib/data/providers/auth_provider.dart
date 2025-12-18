@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import '../../core/utils/app_logger.dart';
 import '../models/user.dart';
 import '../services/auth_service.dart';
 
@@ -20,24 +21,32 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> _loadUserFromStorage() async {
+    logger.d('Loading Auth Data from SharedPreferences...');
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('jwt_token');
     
     final savedName = prefs.getString('user_name');
     final savedEmail = prefs.getString('user_email');
     
-    if (token != null && !JwtDecoder.isExpired(token)) {
-      _token = token;
-      Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+    if (token != null) {
+      if (!JwtDecoder.isExpired(token)) {
+        logger.i('Valid token found in storage.');
+        _token = token;
+        Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
 
-      if (!decodedToken.containsKey('email') && savedEmail != null) {
-        decodedToken['email'] = savedEmail;
+        if (!decodedToken.containsKey('email') && savedEmail != null) {
+          decodedToken['email'] = savedEmail;
+        }
+
+        _user = User.fromTokenPayload(decodedToken, name: savedName);
+        logger.d('User initialized: ${_user?.email} (${_user?.role})');
+        notifyListeners();
+      } else {
+        logger.w('Stored token expired. Logging out.');
+        logout();
       }
-
-      _user = User.fromTokenPayload(decodedToken, name: savedName);
-      notifyListeners();
     } else {
-      if (token != null) logout();
+      logger.d('No token found in storage.');
     }
   }
 
@@ -45,14 +54,13 @@ class AuthProvider with ChangeNotifier {
     _setLoading(true);
     try {
       final responseData = await _authService.login(email, password);
-      
       final token = responseData['token'];
       final name = responseData['name']; 
 
-      _printDecodedToken(token, 'LOGIN');
-      
+      logger.i('Login success for $email. Initializing session.');
       await _saveAuthData(token, email: email, name: name);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      logger.e('Login error in AuthProvider', error: e, stackTrace: stackTrace);
       rethrow;
     } finally {
       _setLoading(false);
@@ -63,30 +71,16 @@ class AuthProvider with ChangeNotifier {
     _setLoading(true);
     try {
       final responseData = await _authService.register(email, password, name);
-      
       final token = responseData['token'];
       final returnedName = responseData['name'];
 
-      _printDecodedToken(token, 'REGISTER');
-      
+      logger.i('Registration success for $email.');
       await _saveAuthData(token, email: email, name: returnedName ?? name);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      logger.e('Registration error in AuthProvider', error: e, stackTrace: stackTrace);
       rethrow;
     } finally {
       _setLoading(false);
-    }
-  }
-
-  void _printDecodedToken(String token, String action) {
-    try {
-      Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
-      print('\n=============================================================');
-      print('>>> [$action] SUCCESS. DECODED JWT PAYLOAD:');
-      print('-------------------------------------------------------------');
-      decodedToken.forEach((key, value) => print('$key: $value'));
-      print('=============================================================\n');
-    } catch (e) {
-      print('>>> [$action] Error decoding token for log: $e');
     }
   }
 
@@ -104,7 +98,9 @@ class AuthProvider with ChangeNotifier {
     _setLoading(true);
     try {
       await _authService.changePassword(_token!, oldPassword, newPassword);
+      logger.i('Password change request successful');
     } catch (e) {
+      logger.w('Password change failed: $e');
       rethrow;
     } finally {
       _setLoading(false);
@@ -120,7 +116,8 @@ class AuthProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     
     Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
-    
+    logger.d('Saving Auth Data. Payload: $decodedToken');
+
     if (email != null) decodedToken['email'] = email;
     
     String? finalName = name ?? 
@@ -144,10 +141,12 @@ class AuthProvider with ChangeNotifier {
       await prefs.setString('user_name', finalName);
     }
 
+    logger.i('Session saved for user: ${_user?.email}');
     notifyListeners();
   }
 
   Future<void> logout() async {
+    logger.i('User logout initiated');
     _user = null;
     _token = null;
     final prefs = await SharedPreferences.getInstance();

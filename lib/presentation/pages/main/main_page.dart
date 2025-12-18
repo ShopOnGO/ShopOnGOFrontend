@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/brand.dart';
 import '../../../data/services/product_service.dart';
+import '../../../core/utils/app_logger.dart';
 import '../../widgets/filter_panel.dart';
 import '../../widgets/product_grid.dart';
 import '../../widgets/search_bar.dart';
@@ -67,9 +68,10 @@ class _MainPageState extends State<MainPage> with SingleTickerProviderStateMixin
           _brands = results[1] as List<Brand>;
           _isLoading = false;
         });
+        logger.d("MainPage: Products and brands successfully loaded");
       }
-    } catch (e) {
-      debugPrint("Error loading main page: $e");
+    } catch (e, stackTrace) {
+      logger.e("MainPage: Error loading initial data", error: e, stackTrace: stackTrace);
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -86,6 +88,7 @@ class _MainPageState extends State<MainPage> with SingleTickerProviderStateMixin
   }
 
   void _handleFilterApply(RangeValues range, int? brandId) {
+    logger.i("MainPage: Applying global filters via MainPage");
     _toggleFilterPanel();
     widget.onApplyFilters?.call(range, brandId);
   }

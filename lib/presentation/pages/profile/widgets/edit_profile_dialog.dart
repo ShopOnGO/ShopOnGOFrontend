@@ -39,10 +39,8 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
     super.dispose();
   }
 
-  Future<void> _submit(BuildContext context) async {
+  Future<void> _submit() async {
     final authProvider = context.read<AuthProvider>();
-    final messenger = ScaffoldMessenger.of(context);
-    final theme = Theme.of(context);
 
     if (_isPasswordSectionVisible) {
       if (!_formKey.currentState!.validate()) {
@@ -56,39 +54,32 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
       try {
         await authProvider.changePassword(oldPass, newPass, confirmPass);
         
-        if (mounted) {
-           _showSuccess(messenger, 'Пароль успешно изменен');
-           Navigator.of(context).pop();
-        }
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Пароль успешно изменен'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        Navigator.of(context).pop();
       } catch (e) {
         String msg = e.toString().replaceAll('Exception: ', '');
-        if (mounted) {
-          _showError(messenger, theme, msg);
-        }
+        
+        if (!mounted) return;
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     } else {
       Navigator.of(context).pop();
     }
-  }
-
-  void _showError(ScaffoldMessengerState messenger, ThemeData theme, String message) {
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: theme.colorScheme.error,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
-  void _showSuccess(ScaffoldMessengerState messenger, String message) {
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
   }
 
   InputDecoration _buildDecoration({
@@ -104,10 +95,9 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
       labelText: label,
       prefixIcon: Icon(icon),
       suffixIcon: suffixIcon,
-      
       enabledBorder: OutlineInputBorder(
         borderRadius: borderRadius,
-        borderSide: BorderSide(color: theme.colorScheme.outline.withOpacity(0.5)),
+        borderSide: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.5)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: borderRadius,
@@ -153,7 +143,6 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 32),
-                        
                         Text(
                           "Личные данные",
                           style: textTheme.titleMedium?.copyWith(
@@ -171,9 +160,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                             context: context,
                           ),
                         ),
-                        
                         const SizedBox(height: 32),
-                        
                         InkWell(
                           onTap: () {
                             setState(() {
@@ -200,7 +187,6 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                             ],
                           ),
                         ),
-                        
                         AnimatedCrossFade(
                           firstChild: Container(),
                           secondChild: Form(
@@ -209,7 +195,6 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                             child: Column(
                               children: [
                                 const SizedBox(height: 16),
-                                
                                 TextFormField(
                                   controller: _oldPasswordController,
                                   obscureText: !_showOldPassword,
@@ -229,7 +214,6 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                                   },
                                 ),
                                 const SizedBox(height: 12),
-                                
                                 TextFormField(
                                   controller: _newPasswordController,
                                   obscureText: !_showNewPassword,
@@ -250,7 +234,6 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                                   },
                                 ),
                                 const SizedBox(height: 12),
-                                
                                 TextFormField(
                                   controller: _confirmPasswordController,
                                   obscureText: !_showConfirmPassword,
@@ -278,9 +261,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                               : CrossFadeState.showFirst,
                           duration: const Duration(milliseconds: 300),
                         ),
-
                         const SizedBox(height: 40),
-
                         Row(
                           children: [
                             Expanded(
@@ -298,7 +279,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                             const SizedBox(width: 16),
                             Expanded(
                               child: ElevatedButton(
-                                onPressed: isLoading ? null : () => _submit(context),
+                                onPressed: isLoading ? null : _submit,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: theme.colorScheme.primary,
                                   foregroundColor: theme.colorScheme.onPrimary,
@@ -322,7 +303,6 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                     ),
                   ),
                 ),
-                
                 if (!isLoading)
                 Positioned(
                   top: 8,
@@ -338,7 +318,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                           shape: BoxShape.circle,
                           color: theme.colorScheme.surface,
                           boxShadow: [
-                            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4)
+                            BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4)
                           ],
                         ),
                         child: Icon(Icons.close, size: 20, color: theme.colorScheme.onSurface),

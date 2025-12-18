@@ -43,6 +43,7 @@ dependencies:
   image_picker: ^1.0.4
   file_picker: ^10.3.8
   http_parser: ^4.1.2
+  logger: ^2.4.0
 
 
 dev_dependencies:
