@@ -15,56 +15,47 @@ class ChatListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final conversations = context.watch<ChatProvider>().conversations;
+    final chatProvider = context.watch<ChatProvider>();
+    final conversations = chatProvider.conversations; // Теперь геттер существует
     final theme = Theme.of(context);
+
+    if (conversations.isEmpty) {
+      return const Center(child: Text("Нет активных чатов", style: TextStyle(fontSize: 12)));
+    }
 
     const double itemHeight = 70.0;
     const double overlap = 12.0;
     const double borderRadius = 22.0;
     const double borderWidth = 4.0;
 
-    final double totalHeight = conversations.isNotEmpty
-        ? (conversations.length * (itemHeight - overlap)) + overlap
-        : 0;
-
-    final List<Widget> chatItems = [];
-    Widget? selectedItem;
-
-    for (int i = 0; i < conversations.length; i++) {
-      final conversation = conversations[i];
-      final isSelected = conversation.id == selectedConversationId;
-
-      final positionedItem = Positioned(
-        top: i * (itemHeight - overlap),
-        left: 0,
-        right: 0,
-        child: _buildConversationItem(
-          context,
-          conversation,
-          isSelected,
-          itemHeight,
-          borderRadius,
-          borderWidth,
-        ),
-      );
-
-      if (isSelected) {
-        selectedItem = positionedItem;
-      } else {
-        chatItems.add(positionedItem);
-      }
-    }
-
-    if (selectedItem != null) {
-      chatItems.add(selectedItem);
-    }
+    final double totalHeight = (conversations.length * (itemHeight - overlap)) + overlap;
 
     return Container(
       color: theme.colorScheme.surface,
       child: SingleChildScrollView(
         child: SizedBox(
           height: totalHeight,
-          child: Stack(clipBehavior: Clip.none, children: chatItems),
+          child: Stack(
+            clipBehavior: Clip.none, 
+            children: List.generate(conversations.length, (i) {
+              final conversation = conversations[i];
+              final isSelected = conversation.id == selectedConversationId;
+
+              return Positioned(
+                top: i * (itemHeight - overlap),
+                left: 0,
+                right: 0,
+                child: _buildConversationItem(
+                  context,
+                  conversation,
+                  isSelected,
+                  itemHeight,
+                  borderRadius,
+                  borderWidth,
+                ),
+              );
+            }),
+          ),
         ),
       ),
     );
@@ -81,17 +72,6 @@ class ChatListView extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final Color backgroundColor = isSelected
-        ? colorScheme.primary
-        : colorScheme.secondaryContainer;
-
-    final String lastMessage = (conversation.messages.isNotEmpty)
-        ? (conversation.messages.last.text ?? '')
-        : '';
-
-    final String avatarLetter =
-        (conversation.name.isNotEmpty) ? conversation.name.substring(0, 1) : '?';
-
     return GestureDetector(
       onTap: () => onConversationSelected(conversation),
       child: AnimatedContainer(
@@ -99,26 +79,17 @@ class ChatListView extends StatelessWidget {
         height: itemHeight,
         margin: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
-          color: backgroundColor,
+          color: isSelected ? colorScheme.primary : colorScheme.secondaryContainer,
           borderRadius: BorderRadius.circular(borderRadius),
-          border: Border.all(
-            color: theme.colorScheme.surface,
-            width: borderWidth,
-          ),
+          border: Border.all(color: theme.colorScheme.surface, width: borderWidth),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Row(
             children: [
               CircleAvatar(
-                backgroundColor: Colors.transparent,
-                child: Text(
-                  avatarLetter,
-                  style: TextStyle(
-                    fontSize: 20,
-                    color: colorScheme.onSecondaryContainer,
-                  ),
-                ),
+                radius: 18,
+                child: Text(conversation.name.isNotEmpty ? conversation.name[0] : "?"),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -128,42 +99,18 @@ class ChatListView extends StatelessWidget {
                   children: [
                     Text(
                       conversation.name,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSecondaryContainer,
-                      ),
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                       maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      lastMessage,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: colorScheme.onSecondaryContainer.withValues(
-                          alpha: 0.8,
-                        ),
-                      ),
+                      conversation.messages.isNotEmpty ? (conversation.messages.last.text ?? "Медиа") : "",
+                      style: const TextStyle(fontSize: 11),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
-              if (conversation.unreadCount > 0) ...[
-                const SizedBox(width: 8),
-                CircleAvatar(
-                  radius: 12,
-                  backgroundColor: isSelected ? theme.cardColor : colorScheme.primary,
-                  child: Text(
-                    conversation.unreadCount.toString(),
-                    style: TextStyle(
-                      color: isSelected ? colorScheme.primary : colorScheme.onPrimary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
         ),

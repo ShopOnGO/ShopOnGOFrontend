@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../data/providers/auth_provider.dart';
+import '../../../../data/providers/chat_provider.dart'; // Добавлен импорт
 import 'profile_action_button.dart';
 import 'edit_profile_dialog.dart';
 
@@ -35,6 +36,9 @@ class UserInfoCard extends StatelessWidget {
             TextButton(
               child: const Text('Выйти'),
               onPressed: () {
+                // Сначала отключаем чат
+                context.read<ChatProvider>().disconnect();
+                // Затем логаут
                 context.read<AuthProvider>().logout();
                 Navigator.of(dialogContext).pop();
               },

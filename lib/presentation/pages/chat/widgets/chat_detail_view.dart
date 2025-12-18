@@ -1,105 +1,116 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../data/models/chat_conversation.dart';
-import '../../../../data/models/chat_message.dart';
 import '../../../../data/providers/chat_provider.dart';
 import 'chat_message_bubble.dart';
 
-class ChatDetailView extends StatelessWidget {
-  final ChatConversation conversation;
+class ChatDetailView extends StatefulWidget {
+  const ChatDetailView({super.key});
 
-  const ChatDetailView({super.key, required this.conversation});
+  @override
+  State<ChatDetailView> createState() => _ChatDetailViewState();
+}
+
+class _ChatDetailViewState extends State<ChatDetailView> {
+  final TextEditingController _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  // Метод для плавной прокрутки вниз
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  void _handleSend() {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+
+    context.read<ChatProvider>().sendMessage(text: text);
+    _controller.clear();
+    // Прокручиваем сразу после отправки
+    _scrollToBottom();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final chatProvider = context.watch<ChatProvider>();
     final theme = Theme.of(context);
+
+    // Если пришли новые сообщения, прокручиваем вниз
+    if (chatProvider.messages.isNotEmpty) {
+      _scrollToBottom();
+    }
+
+    String title = "Поддержка Tailornado";
+    if (chatProvider.isManagerMode) {
+      title = chatProvider.activeTargetUserId != null 
+          ? "Чат с пользователем #${chatProvider.activeTargetUserId}" 
+          : "Выберите пользователя слева";
+    }
 
     return Column(
       children: [
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            reverse: true,
-            itemCount: conversation.messages.length,
-            itemBuilder: (context, index) {
-              final list = conversation.messages.reversed.toList();
-              return ChatMessageBubble(message: list[index]);
-            },
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: theme.dividerColor))),
+          child: Row(
+            children: [
+              const CircleAvatar(child: Icon(Icons.person)),
+              const SizedBox(width: 12),
+              Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+            ],
           ),
         ),
 
+        Expanded(
+          child: chatProvider.messages.isEmpty
+              ? const Center(child: Text("Сообщений нет", style: TextStyle(color: Colors.grey)))
+              : ListView.builder(
+                  controller: _scrollController, // Привязываем контроллер
+                  padding: const EdgeInsets.all(16),
+                  itemCount: chatProvider.messages.length,
+                  itemBuilder: (context, index) => ChatMessageBubble(message: chatProvider.messages[index]),
+                ),
+        ),
+
         Container(
-          padding: const EdgeInsets.all(8).copyWith(bottom: 12),
-          color: Colors.transparent,
+          padding: const EdgeInsets.all(8),
           child: Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.photo),
-                onPressed: () {
-                  context.read<ChatProvider>().addMessage(
-                    conversation.id,
-                    ChatMessage(
-                      imageUrl:
-                          "https://picsum.photos/seed/${DateTime.now().millisecondsSinceEpoch}/300",
-                      timestamp: DateTime.now(),
-                      isSentByMe: true,
-                    ),
-                  );
-                },
+                icon: const Icon(Icons.attach_file),
+                onPressed: () => print("File picker logic"),
               ),
-
-              const SizedBox(width: 8),
-
               Expanded(
                 child: TextField(
+                  controller: _controller,
+                  enabled: !chatProvider.isManagerMode || (chatProvider.isManagerMode && chatProvider.activeTargetUserId != null),
                   decoration: InputDecoration(
                     hintText: 'Введите сообщение...',
-                    filled: true,
-                    fillColor: theme.colorScheme.primary.withValues(alpha: 0.5),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 12,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: BorderSide(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: BorderSide(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: BorderSide(
-                        color: theme.colorScheme.primary,
-                        width: 2,
-                      ),
-                    ),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                   ),
+                  onSubmitted: (_) => _handleSend(),
                 ),
               ),
-
-              const SizedBox(width: 10),
-
+              const SizedBox(width: 8),
               IconButton(
                 icon: const Icon(Icons.send),
-                onPressed: () {},
-                style: IconButton.styleFrom(
-                  padding: const EdgeInsets.all(14),
-                  minimumSize: const Size(
-                    48,
-                    48,
-                  ),
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: theme.colorScheme.onPrimary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
+                onPressed: _handleSend,
+                color: theme.colorScheme.primary,
               ),
             ],
           ),
