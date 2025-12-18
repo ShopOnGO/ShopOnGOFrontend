@@ -11,6 +11,8 @@ import '../presentation/pages/profile/profile_page.dart';
 import '../presentation/widgets/top_navbar.dart';
 import '../presentation/pages/auth/login_page.dart';
 import '../presentation/pages/chat/chat_overlay.dart';
+import '../presentation/pages/profile/settings_page.dart';
+import '../presentation/pages/profile/faq_page.dart';
 
 class DashboardPage extends StatefulWidget {
   final VoidCallback toggleTheme;
@@ -20,6 +22,8 @@ class DashboardPage extends StatefulWidget {
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
+enum ProfileOverlay { none, settings, faq }
+
 class _DashboardPageState extends State<DashboardPage> {
   int currentIndex = 0;
   final TextEditingController _searchController = TextEditingController();
@@ -28,6 +32,7 @@ class _DashboardPageState extends State<DashboardPage> {
   int? _selectedBrandId;
 
   Product? _selectedProduct;
+  ProfileOverlay _activeProfileOverlay = ProfileOverlay.none;
   bool _isChatOpen = false;
 
   static const int catalogPageIndex = 1;
@@ -56,6 +61,18 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
+  void _showProfileOverlay(ProfileOverlay type) {
+    setState(() {
+      _activeProfileOverlay = type;
+    });
+  }
+
+  void _closeProfileOverlay() {
+    setState(() {
+      _activeProfileOverlay = ProfileOverlay.none;
+    });
+  }
+
   void _showLoginDialog() {
     showDialog(
       context: context,
@@ -76,8 +93,7 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
-  void _onSearchChanged(String query) {
-  }
+  void _onSearchChanged(String query) {}
 
   void _onSearchSubmitted() {
     _onTabSelected(catalogPageIndex);
@@ -118,13 +134,17 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
       ProfilePage(
         onProductSelected: _selectProduct,
-        onLoginRequested: _showLoginDialog, 
+        onLoginRequested: _showLoginDialog,
+        onSettingsRequested: () => _showProfileOverlay(ProfileOverlay.settings),
+        onFaqRequested: () => _showProfileOverlay(ProfileOverlay.faq),
       ),
       LikedPage(
         onProductSelected: _selectProduct,
       ),
       CartPage(onProductSelected: _selectProduct),
     ];
+
+    bool isOverlayOpen = _selectedProduct != null || _activeProfileOverlay != ProfileOverlay.none;
 
     return Scaffold(
       appBar: PreferredSize(
@@ -162,33 +182,34 @@ class _DashboardPageState extends State<DashboardPage> {
       body: Stack(
         children: [
           pages[currentIndex],
+          
           IgnorePointer(
             ignoring: _selectedProduct == null,
             child: AnimatedOpacity(
               opacity: _selectedProduct != null ? 1.0 : 0.0,
               duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOut,
-              child: AnimatedScale(
-                scale: _selectedProduct != null ? 1.0 : 0.9,
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeInOutCubic,
-                child: _selectedProduct != null
-                    ? ProductDetailPage(
-                        product: _selectedProduct!,
-                        onClose: _closeProductDetail,
-                      )
-                    : const SizedBox.shrink(),
-              ),
+              child: _selectedProduct != null
+                  ? ProductDetailPage(
+                      product: _selectedProduct!,
+                      onClose: _closeProductDetail,
+                    )
+                  : const SizedBox.shrink(),
             ),
           ),
+
+          if (_activeProfileOverlay == ProfileOverlay.settings)
+            SettingsPage(onClose: _closeProfileOverlay),
+
+          if (_activeProfileOverlay == ProfileOverlay.faq)
+            FaqPage(onClose: _closeProfileOverlay),
 
           Positioned(
             right: 24.0,
             bottom: 24.0,
             child: IgnorePointer(
-              ignoring: _selectedProduct != null,
+              ignoring: isOverlayOpen,
               child: AnimatedOpacity(
-                opacity: _selectedProduct != null ? 0.0 : 1.0,
+                opacity: isOverlayOpen ? 0.0 : 1.0,
                 duration: const Duration(milliseconds: 300),
                 child: ChatOverlay(
                   isChatOpen: _isChatOpen,

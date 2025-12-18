@@ -6,8 +6,13 @@ import 'edit_profile_dialog.dart';
 
 class UserInfoCard extends StatelessWidget {
   final VoidCallback onLoginRequested;
+  final VoidCallback onSettingsTap;
 
-  const UserInfoCard({super.key, required this.onLoginRequested});
+  const UserInfoCard({
+    super.key,
+    required this.onLoginRequested,
+    required this.onSettingsTap,
+  });
 
   Future<void> _showLogoutConfirmationDialog(BuildContext context) async {
     return showDialog<void>(
@@ -25,9 +30,7 @@ class UserInfoCard extends StatelessWidget {
           actions: <Widget>[
             TextButton(
               child: const Text('Отмена'),
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-              },
+              onPressed: () => Navigator.of(dialogContext).pop(),
             ),
             TextButton(
               child: const Text('Выйти'),
@@ -46,9 +49,7 @@ class UserInfoCard extends StatelessWidget {
     showDialog(
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.6),
-      builder: (BuildContext context) {
-        return const EditProfileDialog();
-      },
+      builder: (BuildContext context) => const EditProfileDialog(),
     );
   }
 
@@ -75,7 +76,6 @@ class UserInfoCard extends StatelessWidget {
     AuthProvider authProvider,
   ) {
     final user = authProvider.user!;
-
     final buttonStyle = IconButton.styleFrom(
       backgroundColor: theme.colorScheme.surfaceContainerHighest,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -131,17 +131,17 @@ class UserInfoCard extends StatelessWidget {
             const SizedBox(width: 8),
             IconButton(
               icon: const Icon(Icons.logout),
-              onPressed: () {
-                _showLogoutConfirmationDialog(context);
-              },
+              onPressed: () => _showLogoutConfirmationDialog(context),
               style: buttonStyle,
               tooltip: 'Выйти',
             ),
           ],
         ),
         const SizedBox(height: 20),
-        const ProfileActionButton(text: "Способы оплаты..."),
-        const ProfileActionButton(text: "Настройки"),
+        ProfileActionButton(
+          text: "Настройки",
+          onTap: onSettingsTap,
+        ),
       ],
     );
   }

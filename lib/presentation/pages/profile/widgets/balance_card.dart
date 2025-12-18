@@ -11,7 +11,20 @@ class BalanceCard extends StatelessWidget {
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 20.0),
-        child: Center(child: Text("Баланс", style: textTheme.headlineSmall)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("Баллы", style: textTheme.titleMedium),
+            const SizedBox(height: 4),
+            Text(
+              "1 250",
+              style: textTheme.headlineMedium?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

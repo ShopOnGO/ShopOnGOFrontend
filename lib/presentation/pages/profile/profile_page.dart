@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../data/providers/auth_provider.dart';
 import 'widgets/balance_card.dart';
 import 'widgets/help_center_card.dart';
 import 'widgets/user_info_card.dart';
@@ -8,15 +10,20 @@ import '../../../data/models/product.dart';
 class ProfilePage extends StatelessWidget {
   final Function(Product) onProductSelected;
   final VoidCallback onLoginRequested;
+  final VoidCallback onSettingsRequested;
+  final VoidCallback onFaqRequested;
 
   const ProfilePage({
     super.key,
     required this.onProductSelected,
     required this.onLoginRequested,
+    required this.onSettingsRequested,
+    required this.onFaqRequested,
   });
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
     final theme = Theme.of(context);
     final Color panelColor = theme.colorScheme.secondaryContainer;
     final Color borderColor = theme.scaffoldBackgroundColor;
@@ -44,7 +51,10 @@ class ProfilePage extends StatelessWidget {
                         width: borderWidth,
                       ),
                     ),
-                    child: UserInfoCard(onLoginRequested: onLoginRequested),
+                    child: UserInfoCard(
+                      onLoginRequested: onLoginRequested,
+                      onSettingsTap: onSettingsRequested,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 24),
@@ -61,10 +71,12 @@ class ProfilePage extends StatelessWidget {
                       ),
                     ),
                     child: Column(
-                      children: const [
-                        BalanceCard(),
-                        SizedBox(height: 16),
-                        HelpCenterCard(),
+                      children: [
+                        if (authProvider.isAuthenticated) ...[
+                          const BalanceCard(),
+                          const SizedBox(height: 16),
+                        ],
+                        HelpCenterCard(onFaqTap: onFaqRequested),
                       ],
                     ),
                   ),
