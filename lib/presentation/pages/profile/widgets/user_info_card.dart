@@ -4,6 +4,7 @@ import '../../../../data/providers/auth_provider.dart';
 import '../../../../data/providers/chat_provider.dart';
 import 'profile_action_button.dart';
 import 'edit_profile_dialog.dart';
+import '../add_product_dialog.dart';
 
 class UserInfoCard extends StatelessWidget {
   final VoidCallback onLoginRequested;
@@ -52,6 +53,14 @@ class UserInfoCard extends StatelessWidget {
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.6),
       builder: (BuildContext context) => const EditProfileDialog(),
+    );
+  }
+
+  void _showAddProductDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.6),
+      builder: (BuildContext context) => const AddProductDialog(),
     );
   }
 
@@ -140,6 +149,21 @@ class UserInfoCard extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 20),
+        
+        if (user.role == 'seller') ...[
+          Text(
+            "Панель продавца",
+            style: textTheme.labelLarge?.copyWith(color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          ProfileActionButton(
+            text: "Добавить новый товар",
+            trailing: Icon(Icons.add_box_outlined, color: theme.colorScheme.primary),
+            onTap: () => _showAddProductDialog(context),
+          ),
+          const SizedBox(height: 12),
+        ],
+
         ProfileActionButton(
           text: "Настройки",
           onTap: onSettingsTap,
