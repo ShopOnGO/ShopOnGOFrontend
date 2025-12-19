@@ -1,6 +1,6 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../data/models/product.dart';
-import '../../data/services/product_service.dart';
 import 'product_card.dart';
 
 class ProductGrid extends StatefulWidget {
@@ -8,6 +8,7 @@ class ProductGrid extends StatefulWidget {
   final Function(Product) onProductSelected;
   final bool isScrollable;
   final EdgeInsets padding;
+  final List<Product> products;
 
   const ProductGrid({
     super.key,
@@ -15,6 +16,7 @@ class ProductGrid extends StatefulWidget {
     required this.onProductSelected,
     this.isScrollable = true,
     this.padding = const EdgeInsets.all(24),
+    this.products = const [],
   });
 
   @override
@@ -22,53 +24,49 @@ class ProductGrid extends StatefulWidget {
 }
 
 class _ProductGridState extends State<ProductGrid> {
-  late Future<List<Product>> _productsFuture;
-  final ProductService _productService = ProductService();
+  final ScrollController _scrollController = ScrollController();
 
   @override
-  void initState() {
-    super.initState();
-    _productsFuture = _productService.fetchProducts();
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<Product>>(
-      future: _productsFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return Center(child: Text('Ошибка загрузки: ${snapshot.error}'));
-        }
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('Товары не найдены'));
-        }
-        final products = snapshot.data!;
+    if (widget.products.isEmpty) {
+      return const Center(child: Text('Товары не найдены'));
+    }
 
-        return GridView.builder(
-          padding: widget.padding,
-          shrinkWrap: !widget.isScrollable,
-          physics: widget.isScrollable
-              ? const AlwaysScrollableScrollPhysics()
-              : const NeverScrollableScrollPhysics(),
-
-          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: widget.maxCrossAxisExtent,
-            childAspectRatio: 0.75,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-          ),
-          itemCount: products.length,
-          itemBuilder: (context, index) {
-            return ProductCard(
-              product: products[index],
-              onProductSelected: widget.onProductSelected,
-            );
-          },
-        );
-      },
+    return ScrollConfiguration(
+      behavior: ScrollConfiguration.of(context).copyWith(
+        dragDevices: {
+          PointerDeviceKind.touch,
+          PointerDeviceKind.mouse,
+          PointerDeviceKind.trackpad,
+        },
+      ),
+      child: GridView.builder(
+        controller: _scrollController,
+        padding: widget.padding,
+        shrinkWrap: !widget.isScrollable,
+        physics: widget.isScrollable
+            ? const AlwaysScrollableScrollPhysics()
+            : const NeverScrollableScrollPhysics(),
+        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: widget.maxCrossAxisExtent,
+          childAspectRatio: 0.75,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+        ),
+        itemCount: widget.products.length,
+        itemBuilder: (context, index) {
+          return ProductCard(
+            product: widget.products[index],
+            onProductSelected: widget.onProductSelected,
+          );
+        },
+      ),
     );
   }
 }

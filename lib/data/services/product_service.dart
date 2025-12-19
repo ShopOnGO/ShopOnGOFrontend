@@ -1,89 +1,213 @@
-import 'dart:math';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../../core/utils/app_logger.dart';
+import '../config/api_config.dart';
 import '../models/brand.dart';
 import '../models/category.dart';
 import '../models/product.dart';
 import '../models/product_variant.dart';
 
 class ProductService {
-  Future<List<Product>> fetchProducts() async {
-    await Future.delayed(const Duration(milliseconds: 200));
-    return _generateMockProducts(20);
+  final Map<int, String> _brandsCache = {};
+
+  Future<List<Brand>> getAllBrands() async {
+    final uri = Uri.parse(ApiConfig.brandsEndpoint);
+    logger.d('ProductService: Fetching brands from $uri');
+
+    try {
+      final response = await http.get(uri);
+      
+      if (response.statusCode == 200) {
+        final List<dynamic> brandsJson = json.decode(utf8.decode(response.bodyBytes));
+        List<Brand> brands = brandsJson.map((json) => Brand.fromJson(json)).toList();
+        
+        for (var b in brands) {
+          _brandsCache[b.id] = b.name;
+        }
+        
+        logger.i('ProductService: Loaded ${brands.length} brands');
+        return brands;
+      } else {
+        logger.e('ProductService: Failed to load brands. Status: ${response.statusCode}');
+        return [];
+      }
+    } catch (e, stackTrace) {
+      logger.e('ProductService: Error fetching brands', error: e, stackTrace: stackTrace);
+      return [];
+    }
   }
 
-  List<Product> _generateMockProducts(int count) {
-    final random = Random();
-    final now = DateTime.now();
+  Future<List<Product>> fetchProducts() async {
+    logger.d('ProductService: FetchProducts started');
+    await _ensureBrandsLoaded();
 
-    final sampleNames = ['Футболка "Оверсайз"', 'Джинсы "Слим"', 'Худи "Классик"', 'Кроссовки "Урбан"', 'Рубашка "Лён"'];
-    final sampleBrands = ['Nike', 'Adidas', 'Puma', 'Reebok', 'Zara'];
-    final sampleCategories = ['Верхняя одежда', 'Нижняя одежда', 'Обувь', 'Аксессуары'];
-    final sampleColors = ['Черный', 'Белый', 'Синий', 'Красный', 'Зеленый', 'Серый'];
-    final sampleSizes = ['S', 'M', 'L', 'XL'];
-    final sampleMaterials = ['Хлопок', 'Полиэстер', 'Лён', 'Шерсть', 'Кожа'];
+    final rawList = await _performSearchQuery();
+    final filtered = rawList.where((p) => p.variants.isNotEmpty).toList();
+    
+    logger.i('ProductService: Fetch completed. Products found: ${filtered.length}');
+    return filtered;
+  }
 
-    return List.generate(count, (productIndex) {
-      final brandName = sampleBrands[random.nextInt(sampleBrands.length)];
-      final categoryName = sampleCategories[random.nextInt(sampleCategories.length)];
-      final basePrice = (random.nextInt(4500) + 500).toDouble();
-      
-      final variantCount = random.nextInt(4) + 1;
-      List<String> usedColors = [];
+  Future<List<Product>> _performSearchQuery() async {
+    logger.d('ProductService: Executing GraphQL Query...');
+    const String query = r'''
+      query Search($in: SearchInput!) {
+        searchProducts(input: $in) {
+          products {
+            id
+            name
+            description
+            material
+            category_id
+            brand_id
+            is_active
+            image_urls
+            video_urls
+            variants {
+              variant_id
+              sku
+              price
+              sizes
+              colors
+              stock
+              rating
+              image_urls
+            }
+          }
+        }
+      }
+    ''';
 
-      final List<ProductVariant> variants = List.generate(variantCount, (variantIndex) {
-        String color;
-        do {
-          color = sampleColors[random.nextInt(sampleColors.length)];
-        } while (usedColors.contains(color));
-        usedColors.add(color);
+    final Map<String, dynamic> variables = {
+      "in": {
+        "limit": 100,
+        "page": 1
+      }
+    };
+
+    try {
+      final response = await http.post(
+        Uri.parse(ApiConfig.graphqlUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: json.encode({
+          'query': query,
+          'variables': variables,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+        
+        if (jsonResponse['errors'] != null) {
+          logger.w('ProductService: GraphQL errors - ${jsonResponse['errors']}');
+          return [];
+        }
+
+        final data = jsonResponse['data'];
+        if (data == null || data['searchProducts'] == null) {
+          return [];
+        }
+        
+        final List<dynamic> productsJson = data['searchProducts']['products'] ?? [];
+        return productsJson.map((jsonItem) => _mapGraphqlProduct(jsonItem)).toList();
+      } else {
+        logger.e('ProductService: GraphQL Request failed (Status ${response.statusCode})');
+        return [];
+      }
+    } catch (e, stackTrace) {
+      logger.e('ProductService: Exception in GraphQL performSearch', error: e, stackTrace: stackTrace);
+      return [];
+    }
+  }
+
+  Future<void> _ensureBrandsLoaded() async {
+    if (_brandsCache.isNotEmpty) return;
+    await getAllBrands();
+  }
+
+  Product _mapGraphqlProduct(Map<String, dynamic> json) {
+    try {
+      int productId = 0;
+      if (json['id'] is int) {
+        productId = json['id'];
+      } else if (json['id'] is String) {
+        productId = int.tryParse(json['id']) ?? 0;
+      }
+
+      List<String> productImages = [];
+      if (json['image_urls'] != null && json['image_urls'] is List) {
+        productImages = (json['image_urls'] as List).map((e) => e.toString()).toList();
+      }
+
+      var variantList = json['variants'] as List? ?? [];
+      List<ProductVariant> variants = variantList.map((v) {
+        int vId = 0;
+        if (v['variant_id'] != null) {
+           vId = v['variant_id'] is int ? v['variant_id'] : int.tryParse(v['variant_id'].toString()) ?? 0;
+        }
+
+        List<String> variantImages = [];
+        if (v['image_urls'] != null && v['image_urls'] is List) {
+          variantImages = (v['image_urls'] as List).map((e) => e.toString()).toList();
+        }
+        if (variantImages.isEmpty) {
+          variantImages = List.from(productImages);
+        }
+
+        String colorStr = v['colors']?.toString() ?? '';
+        colorStr = colorStr.replaceAll('[', '').replaceAll(']', '').replaceAll('"', '');
+        if (colorStr.isEmpty) colorStr = 'Стандарт';
 
         return ProductVariant(
-          id: (productIndex + 1) * 100 + variantIndex,
-          sku: 'SKU-${productIndex + 1}-$variantIndex',
-          price: basePrice + (variantIndex * 50),
-          material: sampleMaterials[random.nextInt(sampleMaterials.length)],
-          createdAt: now.subtract(Duration(days: random.nextInt(30))),
-          updatedAt: now.subtract(Duration(hours: random.nextInt(72))),
-          deletedAt: null,
-          rating: (random.nextDouble() * 2.0 + 3.0).clamp(3.0, 5.0),
-          reviewCount: random.nextInt(200),
-          reservedStock: random.nextInt(10),
-          stock: random.nextInt(100),
-          imageURLs: ['https://picsum.photos/seed/${productIndex * 10 + variantIndex + 1}/400/600'],
-          barcode: (random.nextInt(90000000) + 10000000).toString(),
-          dimensions: '${random.nextInt(50)+10}x${random.nextInt(40)+10}x${random.nextInt(10)+2} см',
-          discount: (productIndex % 3 == 0) ? (random.nextInt(40) + 10).toDouble() : 0.0,
-          isActive: random.nextBool(),
+          id: vId, 
+          sku: v['sku']?.toString() ?? '',
+          price: (v['price'] ?? 0).toDouble(),
+          sizes: v['sizes']?.toString() ?? '',
+          colors: colorStr,
+          stock: (v['stock'] ?? 0) is int ? v['stock'] : 0,
+          imageURLs: variantImages,
+          barcode: '',
+          dimensions: '',
+          discount: 0.0,
+          isActive: true,
           minOrder: 1,
-          sizes: sampleSizes[random.nextInt(sampleSizes.length)],
-          colors: color,
+          rating: (v['rating'] ?? 0).toDouble(),
+          reviewCount: 0,
+          reservedStock: 0,
+          material: json['material']?.toString() ?? '',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
         );
-      });
+      }).toList();
+
+      final brandId = json['brand_id'] is int ? json['brand_id'] : 0;
+      final categoryId = json['category_id'] is int ? json['category_id'] : 0;
+      String brandName = _brandsCache[brandId] ?? 'Бренд #$brandId';
+
+      List<String> videoURLs = [];
+      if (json['video_urls'] != null && json['video_urls'] is List) {
+        videoURLs = (json['video_urls'] as List).map((e) => e.toString()).toList();
+      }
 
       return Product(
-        id: productIndex + 1,
-        name: '${sampleNames[random.nextInt(sampleNames.length)]} $brandName',
-        description: 'Это подробное описание для продукта...',
-        imageURLs: variants.first.imageURLs,
-        brand: Brand(
-          id: productIndex + 50,
-          name: brandName,
-          description: 'Описание бренда $brandName',
-          logo: 'https://logo.com/seed/$brandName/logo.png',
-          videoUrl: 'https://videos.com/seed/$brandName/promo.mp4',
-        ),
-        category: Category(
-          id: productIndex + 150,
-          name: categoryName,
-          description: 'Описание категории $categoryName',
-          imageUrl: 'https://picsum.photos/seed/cat${productIndex+1}/200',
-        ),
+        id: productId,
+        name: json['name'] ?? 'Без названия',
+        description: json['description'] ?? '',
+        imageURLs: productImages,
+        brand: Brand(id: brandId, name: brandName, description: '', logo: '', videoUrl: ''),
+        category: Category(id: categoryId, name: 'Категория #$categoryId', description: '', imageUrl: ''),
         variants: variants,
-        isActive: true,
-        videoURLs: [],
-        createdAt: now.subtract(Duration(days: random.nextInt(60), hours: 5)),
-        updatedAt: now.subtract(Duration(minutes: random.nextInt(300))),
-        deletedAt: null,
+        isActive: json['is_active'] ?? true,
+        videoURLs: videoURLs,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
       );
-    });
+    } catch (e) {
+      logger.e('ProductService: Error mapping product JSON', error: e);
+      rethrow;
+    }
   }
 }

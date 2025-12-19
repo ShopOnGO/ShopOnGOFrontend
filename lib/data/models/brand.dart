@@ -15,7 +15,7 @@ class Brand {
 
   factory Brand.fromJson(Map<String, dynamic> json) {
     return Brand(
-      id: json['id'] ?? 0,
+      id: json['ID'] ?? json['id'] ?? 0, 
       name: json['name'] ?? 'Неизвестный бренд',
       description: json['description'] ?? '',
       logo: json['logo'] ?? '', 

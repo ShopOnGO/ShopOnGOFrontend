@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/product.dart';
+import '../../../data/models/brand.dart';
+import '../../../data/services/product_service.dart';
+import '../../../core/utils/app_logger.dart';
 import '../../widgets/filter_panel.dart';
 import '../../widgets/product_grid.dart';
 import '../../widgets/search_bar.dart';
@@ -10,6 +13,7 @@ class MainPage extends StatefulWidget {
   final ValueChanged<String>? onSearchChanged;
   final VoidCallback? onSearchSubmitted;
   final VoidCallback? onClearSearch;
+  final Function(RangeValues, int?)? onApplyFilters;
 
   const MainPage({
     super.key,
@@ -18,16 +22,21 @@ class MainPage extends StatefulWidget {
     this.onSearchChanged,
     this.onSearchSubmitted,
     this.onClearSearch,
+    this.onApplyFilters,
   });
 
   @override
   State<MainPage> createState() => _MainPageState();
 }
 
-class _MainPageState extends State<MainPage>
-    with SingleTickerProviderStateMixin {
+class _MainPageState extends State<MainPage> with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   bool _isFilterPanelVisible = false;
+
+  final ProductService _productService = ProductService();
+  List<Product> _products = [];
+  List<Brand> _brands = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -36,12 +45,35 @@ class _MainPageState extends State<MainPage>
       vsync: this,
       duration: const Duration(milliseconds: 250),
     );
+    _loadData();
   }
 
   @override
   void dispose() {
     _animationController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    try {
+      final results = await Future.wait([
+        _productService.fetchProducts(),
+        _productService.getAllBrands(),
+      ]);
+
+      if (mounted) {
+        setState(() {
+          _products = results[0] as List<Product>;
+          _brands = results[1] as List<Brand>;
+          _isLoading = false;
+        });
+        logger.d("MainPage: Products and brands successfully loaded");
+      }
+    } catch (e, stackTrace) {
+      logger.e("MainPage: Error loading initial data", error: e, stackTrace: stackTrace);
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   void _toggleFilterPanel() {
@@ -55,9 +87,10 @@ class _MainPageState extends State<MainPage>
     });
   }
 
-  void _applyFilterAndClose() {
+  void _handleFilterApply(RangeValues range, int? brandId) {
+    logger.i("MainPage: Applying global filters via MainPage");
     _toggleFilterPanel();
-    widget.onSearchSubmitted?.call();
+    widget.onApplyFilters?.call(range, brandId);
   }
 
   @override
@@ -67,7 +100,7 @@ class _MainPageState extends State<MainPage>
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(45, 0, 45, 0),
+          padding: const EdgeInsets.fromLTRB(45, 5, 45, 0),
           child: Stack(
             children: [
               Padding(
@@ -77,7 +110,10 @@ class _MainPageState extends State<MainPage>
                     parent: _animationController,
                     curve: Curves.fastOutSlowIn,
                   ),
-                  child: FilterPanel(onApply: _applyFilterAndClose),
+                  child: FilterPanel(
+                    brands: _brands,
+                    onApply: _handleFilterApply,
+                  ),
                 ),
               ),
               CustomSearchBar(
@@ -87,18 +123,19 @@ class _MainPageState extends State<MainPage>
                 onClear: widget.onClearSearch,
                 onFilterTap: _toggleFilterPanel,
               ),
-              // -------------------------
             ],
           ),
         ),
 
         Expanded(
-          child: GestureDetector(
-            onTap: _isFilterPanelVisible ? _toggleFilterPanel : null,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 30),
-              child: ProductGrid(onProductSelected: widget.onProductSelected),
-            ),
+          child: Padding(
+            padding: const EdgeInsets.only(top: 30),
+            child: _isLoading 
+                ? const Center(child: CircularProgressIndicator())
+                : ProductGrid(
+                    products: _products,
+                    onProductSelected: widget.onProductSelected
+                  ),
           ),
         ),
       ],

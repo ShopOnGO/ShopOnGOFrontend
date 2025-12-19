@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../../data/providers/view_history_provider.dart';
 import '../../../widgets/product_grid.dart';
 import '../../../../data/models/product.dart';
 
@@ -15,6 +17,9 @@ class ViewHistorySection extends StatelessWidget {
     final Color borderColor = theme.scaffoldBackgroundColor;
     const double borderWidth = 6.0;
     const double borderRadius = 22.0;
+
+    final historyProvider = context.watch<ViewHistoryProvider>();
+    final viewedProducts = historyProvider.viewedProducts;
 
     return Container(
       decoration: BoxDecoration(
@@ -35,11 +40,29 @@ class ViewHistorySection extends StatelessWidget {
             ),
           ),
 
-          ProductGrid(
-            onProductSelected: onProductSelected,
-            isScrollable: false,
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
-          ),
+          viewedProducts.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 48.0,
+                    horizontal: 20.0,
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Вы еще не просматривали товары',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: theme.colorScheme.onSecondaryContainer
+                            .withValues(alpha: 0.8),
+                      ),
+                    ),
+                  ),
+                )
+              : ProductGrid(
+                  products: viewedProducts,
+                  onProductSelected: onProductSelected,
+                  isScrollable: false,
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+                ),
         ],
       ),
     );
