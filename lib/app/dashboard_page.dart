@@ -8,6 +8,7 @@ import '../presentation/pages/main/main_page.dart';
 import '../presentation/pages/product_detail/product_detail_page.dart';
 import '../presentation/pages/profile/profile_page.dart';
 import '../presentation/widgets/top_navbar.dart';
+import '../presentation/widgets/bottom_navbar.dart';
 import '../presentation/pages/auth/login_page.dart';
 import '../presentation/pages/chat/chat_overlay.dart';
 import '../presentation/pages/profile/settings_page.dart';
@@ -25,10 +26,9 @@ class DashboardPage extends StatefulWidget {
 enum ProfileOverlay { none, settings, faq }
 
 class _DashboardPageState extends State<DashboardPage> {
-  
   int currentIndex = 0;
   final TextEditingController _searchController = TextEditingController();
-  
+
   RangeValues _priceRange = const RangeValues(0, 10000);
   int? _selectedBrandId;
 
@@ -67,22 +67,32 @@ class _DashboardPageState extends State<DashboardPage> {
     setState(() {
       _activeProfileOverlay = type;
     });
-  }
 
-  void _closeProfileOverlay() {
-    setState(() {
-      _activeProfileOverlay = ProfileOverlay.none;
+    Widget page;
+    if (type == ProfileOverlay.settings) {
+      page = SettingsPage(onClose: () => Navigator.of(context).pop());
+    } else {
+      page = FaqPage(onClose: () => Navigator.of(context).pop());
+    }
+
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.6),
+      builder: (BuildContext dialogContext) => page,
+    ).then((_) {
+      setState(() {
+        _activeProfileOverlay = ProfileOverlay.none;
+      });
     });
   }
 
   void _showLoginDialog() {
+    setState(() => _activeProfileOverlay = ProfileOverlay.none);
     showDialog(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.6), 
+      barrierColor: Colors.black.withValues(alpha: 0.6),
       builder: (BuildContext dialogContext) {
-        return LoginPage(
-          onClose: () => Navigator.of(dialogContext).pop(),
-        );
+        return LoginPage(onClose: () => Navigator.of(dialogContext).pop());
       },
     );
   }
@@ -114,9 +124,11 @@ class _DashboardPageState extends State<DashboardPage> {
       logger.i('App: Language changed to Russian');
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
+    final bool isMobile = MediaQuery.of(context).size.width < 650;
+
     final pages = [
       MainPage(
         searchController: _searchController,
@@ -142,17 +154,18 @@ class _DashboardPageState extends State<DashboardPage> {
         onSettingsRequested: () => _showProfileOverlay(ProfileOverlay.settings),
         onFaqRequested: () => _showProfileOverlay(ProfileOverlay.faq),
       ),
-      LikedPage(
-        onProductSelected: _selectProduct,
-      ),
+      LikedPage(onProductSelected: _selectProduct),
       CartPage(onProductSelected: _selectProduct),
     ];
 
-    bool isOverlayOpen = _selectedProduct != null || _activeProfileOverlay != ProfileOverlay.none;
+    bool isProductDetailOpen = _selectedProduct != null;
+    bool isAnyOverlayOpen =
+        isProductDetailOpen || _activeProfileOverlay != ProfileOverlay.none;
 
     return Scaffold(
+      extendBody: true,
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(80),
+        preferredSize: Size.fromHeight(isMobile ? 75 : 80),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -162,37 +175,57 @@ class _DashboardPageState extends State<DashboardPage> {
                 children: [
                   Text(
                     "Tailornado",
-                    style: Theme.of(context).textTheme.headlineLarge,
+                    style: isMobile
+                        ? Theme.of(context).textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 28,
+                          )
+                        : Theme.of(context).textTheme.headlineLarge,
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    flex: 5,
-                    child: TopNavbar(
-                      currentIndex: currentIndex,
-                      onTabSelected: _onTabSelected,
+
+                  if (!isMobile) ...[
+                    const SizedBox(width: 16),
+                    Expanded(
+                      flex: 5,
+                      child: TopNavbar(
+                        currentIndex: currentIndex,
+                        onTabSelected: _onTabSelected,
+                      ),
                     ),
-                  ),
+                  ],
+
                   const SizedBox(width: 16),
-                  
+
+                  if (isMobile) const Spacer(),
+
                   TextButton(
                     onPressed: _toggleLanguage,
                     style: TextButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.3),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.secondaryContainer.withValues(alpha: 0.3),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      minimumSize: isMobile ? const Size(55, 45) : null,
+                      padding: isMobile
+                          ? const EdgeInsets.symmetric(horizontal: 12)
+                          : null,
                     ),
                     child: Text(
                       "lang_code".tr(),
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
+                        fontSize: isMobile ? 16 : 14,
                         color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(width: 8),
 
                   IconButton(
-                    icon: const Icon(Icons.brightness_6),
+                    icon: Icon(Icons.brightness_6, size: isMobile ? 28 : 24),
                     onPressed: () {
                       logger.d('App: Theme toggled');
                       widget.toggleTheme();
@@ -207,13 +240,13 @@ class _DashboardPageState extends State<DashboardPage> {
       body: Stack(
         children: [
           pages[currentIndex],
-          
+
           IgnorePointer(
-            ignoring: _selectedProduct == null,
+            ignoring: !isProductDetailOpen,
             child: AnimatedOpacity(
-              opacity: _selectedProduct != null ? 1.0 : 0.0,
+              opacity: isProductDetailOpen ? 1.0 : 0.0,
               duration: const Duration(milliseconds: 200),
-              child: _selectedProduct != null
+              child: isProductDetailOpen
                   ? ProductDetailPage(
                       product: _selectedProduct!,
                       onClose: _closeProductDetail,
@@ -222,19 +255,20 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ),
 
-          if (_activeProfileOverlay == ProfileOverlay.settings)
-            SettingsPage(onClose: _closeProfileOverlay),
-
-          if (_activeProfileOverlay == ProfileOverlay.faq)
-            FaqPage(onClose: _closeProfileOverlay),
+          if (isProductDetailOpen)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: Container(color: Colors.black.withValues(alpha: 0.2)),
+              ),
+            ),
 
           Positioned(
-            right: 24.0,
-            bottom: 24.0,
+            right: isMobile ? (_isChatOpen ? 12.0 : 24.0) : 24.0,
+            bottom: isMobile ? 115.0 : 24.0,
             child: IgnorePointer(
-              ignoring: isOverlayOpen,
+              ignoring: isAnyOverlayOpen,
               child: AnimatedOpacity(
-                opacity: isOverlayOpen ? 0.0 : 1.0,
+                opacity: isAnyOverlayOpen ? 0.0 : 1.0,
                 duration: const Duration(milliseconds: 300),
                 child: ChatOverlay(
                   isChatOpen: _isChatOpen,
@@ -245,6 +279,12 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ],
       ),
+      bottomNavigationBar: isMobile
+          ? BottomNavbar(
+              currentIndex: currentIndex,
+              onTabSelected: _onTabSelected,
+            )
+          : null,
     );
   }
 }

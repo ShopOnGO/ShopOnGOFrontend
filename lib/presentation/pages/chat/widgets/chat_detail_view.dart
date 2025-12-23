@@ -7,7 +7,8 @@ import '../../../../core/utils/app_logger.dart';
 import 'chat_message_bubble.dart';
 
 class ChatDetailView extends StatefulWidget {
-  const ChatDetailView({super.key});
+  final VoidCallback onClose;
+  const ChatDetailView({super.key, required this.onClose});
 
   @override
   State<ChatDetailView> createState() => _ChatDetailViewState();
@@ -24,18 +25,6 @@ class _ChatDetailViewState extends State<ChatDetailView> {
     super.dispose();
   }
 
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
-  }
-
   void _handleSend() {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
@@ -44,7 +33,6 @@ class _ChatDetailViewState extends State<ChatDetailView> {
     
     context.read<ChatProvider>().sendMessage(text: text);
     _controller.clear();
-    _scrollToBottom();
   }
 
   Future<void> _handlePickFile() async {
@@ -66,8 +54,6 @@ class _ChatDetailViewState extends State<ChatDetailView> {
         file.bytes!, 
         file.name,
       );
-      
-      _scrollToBottom();
     } else {
       logger.w("Chat UI: File picker cancelled or failed");
     }
@@ -77,14 +63,13 @@ class _ChatDetailViewState extends State<ChatDetailView> {
   Widget build(BuildContext context) {
     final chatProvider = context.watch<ChatProvider>();
     final theme = Theme.of(context);
+    final bool isMobile = MediaQuery.of(context).size.width < 650;
 
-    if (chatProvider.messages.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scrollController.hasClients) {
-          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-        }
-      });
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      }
+    });
 
     String title = "chat.support_name".tr();
     if (chatProvider.isManagerMode) {
@@ -96,44 +81,86 @@ class _ChatDetailViewState extends State<ChatDetailView> {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: EdgeInsets.symmetric(
+            horizontal: isMobile ? 8 : 12, 
+            vertical: isMobile ? 8 : 12
+          ),
           decoration: BoxDecoration(border: Border(bottom: BorderSide(color: theme.dividerColor))),
           child: Row(
             children: [
-              const CircleAvatar(child: Icon(Icons.person)),
+              if (isMobile && chatProvider.isManagerMode && chatProvider.activeTargetUserId != null)
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  icon: const Icon(Icons.arrow_back_ios_new, size: 18),
+                  onPressed: () {
+                    logger.i('Chat UI: Manager returning to user list');
+                    chatProvider.sendCommand("list", targetId: null);
+                  },
+                ),
+              if (isMobile && chatProvider.isManagerMode && chatProvider.activeTargetUserId != null)
+                const SizedBox(width: 8),
+                
+              CircleAvatar(
+                radius: isMobile ? 14 : 20, 
+                child: Icon(Icons.person, size: isMobile ? 16 : 24)
+              ),
               const SizedBox(width: 12),
-              Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-              const Spacer(),
+              Expanded(
+                child: Text(
+                  title, 
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold, 
+                    fontSize: isMobile ? 14 : 16
+                  ), 
+                  overflow: TextOverflow.ellipsis
+                )
+              ),
+              
               if (chatProvider.isUploading)
-                const SizedBox(
-                  width: 20, 
-                  height: 20, 
-                  child: CircularProgressIndicator(strokeWidth: 2)
+                const Padding(
+                  padding: EdgeInsets.only(left: 8),
+                  child: SizedBox(
+                    width: 16, 
+                    height: 16, 
+                    child: CircularProgressIndicator(strokeWidth: 2)
+                  ),
+                ),
+
+              if (isMobile)
+                IconButton(
+                  icon: const Icon(Icons.close, size: 24),
+                  onPressed: widget.onClose,
                 ),
             ],
           ),
         ),
+        
         Expanded(
           child: chatProvider.messages.isEmpty
               ? Center(
                   child: Text(
                     "chat.no_messages".tr(), 
-                    style: const TextStyle(color: Colors.grey)
+                    style: TextStyle(color: Colors.grey, fontSize: isMobile ? 12 : 14)
                   )
                 )
               : ListView.builder(
                   controller: _scrollController,
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.all(isMobile ? 10 : 16),
                   itemCount: chatProvider.messages.length,
                   itemBuilder: (context, index) => ChatMessageBubble(message: chatProvider.messages[index]),
                 ),
         ),
+        
         Container(
-          padding: const EdgeInsets.all(8),
+          padding: EdgeInsets.symmetric(
+            horizontal: isMobile ? 4 : 8, 
+            vertical: isMobile ? 4 : 8
+          ),
           child: Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.image_outlined),
+                icon: Icon(Icons.image_outlined, size: isMobile ? 22 : 24),
                 tooltip: "chat.send_image_tooltip".tr(),
                 onPressed: chatProvider.isUploading ? null : _handlePickFile,
               ),
@@ -141,17 +168,22 @@ class _ChatDetailViewState extends State<ChatDetailView> {
                 child: TextField(
                   controller: _controller,
                   enabled: !chatProvider.isManagerMode || (chatProvider.isManagerMode && chatProvider.activeTargetUserId != null),
+                  style: TextStyle(fontSize: isMobile ? 14 : 16),
                   decoration: InputDecoration(
                     hintText: 'chat.hint'.tr(),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16, 
+                      vertical: isMobile ? 10 : 12
+                    ),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(25)),
                   ),
                   onSubmitted: (_) => _handleSend(),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 4),
               IconButton(
-                icon: const Icon(Icons.send),
+                icon: Icon(Icons.send, size: isMobile ? 22 : 24),
                 onPressed: _handleSend,
                 color: theme.colorScheme.primary,
               ),

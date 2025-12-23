@@ -103,165 +103,172 @@ class _LoginPageState extends State<LoginPage> {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
     final authProvider = context.watch<AuthProvider>();
+    
+    final bool isMobile = MediaQuery.of(context).size.width < 650;
+    final double keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
 
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 450),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Card(
-              elevation: 24.0,
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Form(
-                  key: _formKey,
-                  autovalidateMode: AutovalidateMode.onUserInteraction,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: 16),
-                      Text(
-                        _isLoginMode ? 'auth.login_title'.tr() : 'auth.register_title'.tr(),
-                        textAlign: TextAlign.center,
-                        style: textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 24),
-                      if (!_isLoginMode) ...[
+    return Align(
+      alignment: isMobile ? const Alignment(0, -0.3) : Alignment.center,
+      child: SingleChildScrollView(
+        padding: EdgeInsets.only(bottom: keyboardHeight),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 450),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Card(
+                elevation: 24.0,
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Form(
+                    key: _formKey,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 16),
+                        Text(
+                          _isLoginMode ? 'auth.login_title'.tr() : 'auth.register_title'.tr(),
+                          textAlign: TextAlign.center,
+                          style: textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: 24),
+                        if (!_isLoginMode) ...[
+                          TextFormField(
+                            controller: _nameController,
+                            textCapitalization: TextCapitalization.words,
+                            decoration: _buildDecoration(
+                              label: 'auth.name_label'.tr(),
+                              icon: Icons.person_outline,
+                              context: context,
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'auth.err_name'.tr();
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                        ],
                         TextFormField(
-                          controller: _nameController,
-                          textCapitalization: TextCapitalization.words,
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
                           decoration: _buildDecoration(
-                            label: 'auth.name_label'.tr(),
-                            icon: Icons.person_outline,
+                            label: 'auth.email_label'.tr(),
+                            icon: Icons.email_outlined,
                             context: context,
                           ),
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
-                              return 'auth.err_name'.tr();
+                              return 'auth.err_email_empty'.tr();
+                            }
+                            if (!_emailRegex.hasMatch(value.trim())) {
+                              return 'auth.err_email_invalid'.tr();
                             }
                             return null;
                           },
                         ),
                         const SizedBox(height: 16),
-                      ],
-                      TextFormField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: _buildDecoration(
-                          label: 'auth.email_label'.tr(),
-                          icon: Icons.email_outlined,
-                          context: context,
-                        ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'auth.err_email_empty'.tr();
-                          }
-                          if (!_emailRegex.hasMatch(value.trim())) {
-                            return 'auth.err_email_invalid'.tr();
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _passwordController,
-                        obscureText: !_isPasswordVisible, 
-                        decoration: _buildDecoration(
-                          label: 'auth.password_label'.tr(),
-                          icon: Icons.lock_outline,
-                          context: context,
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _isPasswordVisible 
-                                ? Icons.visibility 
-                                : Icons.visibility_off,
+                        TextFormField(
+                          controller: _passwordController,
+                          obscureText: !_isPasswordVisible, 
+                          decoration: _buildDecoration(
+                            label: 'auth.password_label'.tr(),
+                            icon: Icons.lock_outline,
+                            context: context,
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _isPasswordVisible 
+                                  ? Icons.visibility 
+                                  : Icons.visibility_off,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _isPasswordVisible = !_isPasswordVisible;
+                                });
+                              },
                             ),
-                            onPressed: () {
-                              setState(() {
-                                _isPasswordVisible = !_isPasswordVisible;
-                              });
-                            },
                           ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'auth.err_pass_empty'.tr();
+                            }
+                            if (!_isLoginMode && value.length < 6) {
+                              return 'auth.err_pass_short'.tr();
+                            }
+                            return null;
+                          },
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'auth.err_pass_empty'.tr();
-                          }
-                          if (!_isLoginMode && value.length < 6) {
-                            return 'auth.err_pass_short'.tr();
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton(
-                        onPressed: authProvider.isLoading ? null : _submit,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          backgroundColor: theme.colorScheme.primary,
-                          foregroundColor: theme.colorScheme.onPrimary,
-                        ),
-                        child: authProvider.isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                              )
-                            : Text(_isLoginMode ? 'auth.btn_login'.tr() : 'auth.btn_register'.tr()),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          const Expanded(child: Divider()),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: Text('auth.or'.tr(), style: textTheme.bodySmall),
+                        const SizedBox(height: 24),
+                        ElevatedButton(
+                          onPressed: authProvider.isLoading ? null : _submit,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            backgroundColor: theme.colorScheme.primary,
+                            foregroundColor: theme.colorScheme.onPrimary,
                           ),
-                          const Expanded(child: Divider()),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      TextButton(
-                        onPressed: () {
-                          _formKey.currentState?.reset();
-                          setState(() {
-                            _isLoginMode = !_isLoginMode;
-                            _isPasswordVisible = false;
-                          });
-                        },
-                        child: Text(_isLoginMode ? 'auth.no_account'.tr() : 'auth.has_account'.tr()),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-             Positioned(
-              top: 8,
-              right: 8,
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(20),
-                  onTap: widget.onClose,
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: theme.scaffoldBackgroundColor,
-                    ),
-                    child: Icon(
-                      Icons.close,
-                      size: 20,
-                      color: theme.colorScheme.onSurface,
+                          child: authProvider.isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                )
+                              : Text(_isLoginMode ? 'auth.btn_login'.tr() : 'auth.btn_register'.tr()),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            const Expanded(child: Divider()),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                              child: Text('auth.or'.tr(), style: textTheme.bodySmall),
+                            ),
+                            const Expanded(child: Divider()),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton(
+                          onPressed: () {
+                            _formKey.currentState?.reset();
+                            setState(() {
+                              _isLoginMode = !_isLoginMode;
+                              _isPasswordVisible = false;
+                            });
+                          },
+                          child: Text(_isLoginMode ? 'auth.no_account'.tr() : 'auth.has_account'.tr()),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+               Positioned(
+                top: 8,
+                right: 8,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(20),
+                    onTap: widget.onClose,
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: theme.scaffoldBackgroundColor,
+                      ),
+                      child: Icon(
+                        Icons.close,
+                        size: 20,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

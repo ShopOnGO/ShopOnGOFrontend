@@ -89,46 +89,75 @@ class _MainPageState extends State<MainPage> with SingleTickerProviderStateMixin
   }
 
   void _toggleFilterPanel() {
-    setState(() {
-      _isFilterPanelVisible = !_isFilterPanelVisible;
-      if (_isFilterPanelVisible) {
-        _animationController.forward();
-      } else {
-        _animationController.reverse();
-      }
-    });
+    final bool isMobile = MediaQuery.of(context).size.width < 650;
+
+    if (isMobile) {
+      logger.i('MainPage: Opening mobile filter sheet');
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+        ),
+        builder: (context) => FilterPanel(
+          brands: _brands,
+          maxLimit: _maxPriceLimit,
+          onApply: _handleFilterApply,
+          isMobile: true,
+        ),
+      );
+    } else {
+      setState(() {
+        _isFilterPanelVisible = !_isFilterPanelVisible;
+        if (_isFilterPanelVisible) {
+          _animationController.forward();
+        } else {
+          _animationController.reverse();
+        }
+      });
+    }
   }
 
   void _handleFilterApply(RangeValues range, int? brandId) {
     logger.i("MainPage: Applying global filters");
-    _toggleFilterPanel();
+    
+    if (MediaQuery.of(context).size.width < 650) {
+      Navigator.pop(context);
+    } else {
+      _toggleFilterPanel();
+    }
+    
     widget.onApplyFilters?.call(range, brandId);
   }
 
   @override
   Widget build(BuildContext context) {
+    final bool isMobile = MediaQuery.of(context).size.width < 650;
     const double searchBarHeight = 50.0;
+    final double horizontalPadding = isMobile ? 16.0 : 45.0;
 
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(45, 5, 45, 0),
+          padding: EdgeInsets.fromLTRB(horizontalPadding, 5, horizontalPadding, 0),
           child: Stack(
             children: [
-              Padding(
-                padding: const EdgeInsets.only(top: searchBarHeight / 2),
-                child: SizeTransition(
-                  sizeFactor: CurvedAnimation(
-                    parent: _animationController,
-                    curve: Curves.fastOutSlowIn,
-                  ),
-                  child: FilterPanel(
-                    brands: _brands,
-                    maxLimit: _maxPriceLimit,
-                    onApply: _handleFilterApply,
+              if (!isMobile)
+                Padding(
+                  padding: const EdgeInsets.only(top: searchBarHeight / 2),
+                  child: SizeTransition(
+                    sizeFactor: CurvedAnimation(
+                      parent: _animationController,
+                      curve: Curves.fastOutSlowIn,
+                    ),
+                    child: FilterPanel(
+                      brands: _brands,
+                      maxLimit: _maxPriceLimit,
+                      onApply: _handleFilterApply,
+                    ),
                   ),
                 ),
-              ),
               CustomSearchBar(
                 controller: widget.searchController,
                 hintText: "search.main_hint".tr(),
@@ -143,12 +172,13 @@ class _MainPageState extends State<MainPage> with SingleTickerProviderStateMixin
 
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.only(top: 30),
+            padding: EdgeInsets.only(top: isMobile ? 15 : 30),
             child: _isLoading 
                 ? const Center(child: CircularProgressIndicator())
                 : ProductGrid(
                     products: _products,
-                    onProductSelected: widget.onProductSelected
+                    onProductSelected: widget.onProductSelected,
+                    padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 20),
                   ),
           ),
         ),

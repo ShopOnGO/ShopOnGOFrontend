@@ -88,6 +88,8 @@ class UserInfoCard extends StatelessWidget {
     AuthProvider authProvider,
   ) {
     final user = authProvider.user!;
+    final bool isMobile = MediaQuery.of(context).size.width < 650;
+
     final buttonStyle = IconButton.styleFrom(
       backgroundColor: theme.colorScheme.surfaceContainerHighest,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -95,7 +97,7 @@ class UserInfoCard extends StatelessWidget {
         color: theme.colorScheme.outline.withValues(alpha: 0.5),
         width: 1.5,
       ),
-      fixedSize: const Size(44, 44),
+      fixedSize: isMobile ? const Size(40, 40) : const Size(44, 44),
     );
 
     return Column(
@@ -106,43 +108,52 @@ class UserInfoCard extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(12.0),
               child: Container(
-                width: 60,
-                height: 60,
+                width: isMobile ? 50 : 60,
+                height: isMobile ? 50 : 60,
                 color: theme.colorScheme.surfaceContainerHighest,
                 child: user.avatarUrl != null && user.avatarUrl!.isNotEmpty
                     ? Image.network(
                         user.avatarUrl!,
                         fit: BoxFit.cover,
                         errorBuilder: (c, e, s) =>
-                            const Icon(Icons.person_outline, size: 32),
+                            const Icon(Icons.person_outline, size: 28),
                       )
-                    : const Icon(Icons.person_outline, size: 32),
+                    : Icon(Icons.person_outline, size: isMobile ? 28 : 32),
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(user.name ?? 'Имя', style: textTheme.headlineSmall),
+                  Text(
+                    user.name ?? 'Имя', 
+                    style: isMobile ? textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold) : textTheme.headlineSmall,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   Text(
                     user.email,
                     style: textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.outline,
+                      fontSize: isMobile ? 12 : null,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
+            const SizedBox(width: 8),
             IconButton(
-              icon: const Icon(Icons.edit_outlined),
+              icon: Icon(Icons.edit_outlined, size: isMobile ? 18 : 20),
               onPressed: () => _showEditProfileDialog(context),
               style: buttonStyle,
               tooltip: 'profile.edit_title'.tr(),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 4),
             IconButton(
-              icon: const Icon(Icons.logout),
+              icon: Icon(Icons.logout, size: isMobile ? 18 : 20),
               onPressed: () => _showLogoutConfirmationDialog(context),
               style: buttonStyle,
               tooltip: 'auth.btn_logout'.tr(),
@@ -190,6 +201,7 @@ class UserInfoCard extends StatelessWidget {
             Text(
               'profile.unauth_msg'.tr(),
               style: textTheme.titleMedium,
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             ElevatedButton(

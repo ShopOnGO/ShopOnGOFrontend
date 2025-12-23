@@ -122,24 +122,26 @@ class ChatProvider with ChangeNotifier {
     try {
       final json = jsonDecode(data);
 
-      if (json['payload'] != null && json['payload'] is List) {
+      if (json['payload'] != null &&
+          json['payload'] is List &&
+          json['message'] == "list of waiting users") {
         _waitingUsers = List<int>.from(json['payload']);
         logger.i('Chat: Updated waiting users: $_waitingUsers');
         notifyListeners();
-      }
-
-      final message = ChatMessage.fromServerJson(json, _currentUserId ?? 0);
-      if (message.isSentByMe && message.type != "system") {
-        logger.d(
-          'Chat: Ignored echo message from server to prevent duplication.',
-        );
         return;
       }
 
-      _messages.add(message);
-      _hasUnreadMessages = true;
-      logger.d('Chat: New message added. Count: ${_messages.length}');
-      notifyListeners();
+      final message = ChatMessage.fromServerJson(json, _currentUserId ?? 0);
+
+      bool alreadyExists =
+          message.id != null && _messages.any((m) => m.id == message.id);
+
+      if (!alreadyExists) {
+        _messages.add(message);
+        _hasUnreadMessages = !message.isSentByMe;
+        logger.d('Chat: New message added to list. Total: ${_messages.length}');
+        notifyListeners();
+      }
     } catch (e) {
       logger.e('Chat: Error parsing incoming message', error: e);
     }
@@ -193,16 +195,6 @@ class ChatProvider with ChangeNotifier {
         };
 
         _channel!.sink.add(jsonEncode(socketPayload));
-
-        _messages.add(
-          ChatMessage(
-            imageUrl: imageUrl,
-            type: "image",
-            timestamp: DateTime.now(),
-            isSentByMe: true,
-            fromId: _currentUserId,
-          ),
-        );
       } else {
         logger.e('Chat: Media Upload Failed. Status: ${response.statusCode}');
       }
@@ -235,6 +227,8 @@ class ChatProvider with ChangeNotifier {
     } else if (cmd == "close") {
       logger.i('Chat Manager: Closing session with $_activeTargetUserId');
       _activeTargetUserId = null;
+    } else if (cmd == "list" && targetId == null) {
+      _activeTargetUserId = null;
     }
 
     final payload = {"command": cmd, if (targetId != null) "user_id": targetId};
@@ -256,17 +250,6 @@ class ChatProvider with ChangeNotifier {
     };
 
     _channel!.sink.add(jsonEncode(payload));
-
-    _messages.add(
-      ChatMessage(
-        text: text,
-        timestamp: DateTime.now(),
-        isSentByMe: true,
-        type: "text",
-        fromId: _currentUserId,
-      ),
-    );
-    notifyListeners();
   }
 
   void disconnect() {

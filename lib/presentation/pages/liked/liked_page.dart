@@ -82,14 +82,47 @@ class _LikedPageState extends State<LikedPage>
   }
 
   void _toggleFilterPanel() {
-    setState(() {
-      _isFilterPanelVisible = !_isFilterPanelVisible;
-      if (_isFilterPanelVisible) {
-        _animationController.forward();
-      } else {
-        _animationController.reverse();
-      }
-    });
+    final bool isMobile = MediaQuery.of(context).size.width < 650;
+
+    if (isMobile) {
+      logger.i('LikedPage: Opening mobile filter sheet');
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+        ),
+        builder: (context) {
+          final likedProvider = context.read<LikedProvider>();
+          double maxLikedPrice = 0;
+          for (var item in likedProvider.likedItems) {
+            for (var v in item.product.variants) {
+              if (v.price > maxLikedPrice) maxLikedPrice = v.price;
+            }
+          }
+          if (maxLikedPrice == 0) maxLikedPrice = 1000;
+
+          return FilterPanel(
+            brands: _brands,
+            initialBrandId: _selectedBrandId,
+            initialRange: _priceRange,
+            maxLimit: maxLikedPrice,
+            onApply: _applyFilterAndClose,
+            isMobile: true,
+          );
+        },
+      );
+    } else {
+      setState(() {
+        _isFilterPanelVisible = !_isFilterPanelVisible;
+        if (_isFilterPanelVisible) {
+          _animationController.forward();
+        } else {
+          _animationController.reverse();
+        }
+      });
+    }
   }
 
   void _applyFilterAndClose(RangeValues range, int? brandId) {
@@ -97,12 +130,19 @@ class _LikedPageState extends State<LikedPage>
       _priceRange = range;
       _selectedBrandId = brandId;
     });
-    _toggleFilterPanel();
+
+    if (MediaQuery.of(context).size.width < 650) {
+      Navigator.pop(context);
+    } else {
+      _toggleFilterPanel();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final bool isMobile = MediaQuery.of(context).size.width < 650;
     const double searchBarHeight = 50.0;
+    final double horizontalPadding = isMobile ? 16.0 : 45.0;
 
     final likedProvider = context.watch<LikedProvider>();
     final allLikedProducts = likedProvider.likedItems
@@ -144,25 +184,26 @@ class _LikedPageState extends State<LikedPage>
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(45, 5, 45, 0),
+          padding: EdgeInsets.fromLTRB(horizontalPadding, 5, horizontalPadding, 0),
           child: Stack(
             children: [
-              Padding(
-                padding: const EdgeInsets.only(top: searchBarHeight / 2),
-                child: SizeTransition(
-                  sizeFactor: CurvedAnimation(
-                    parent: _animationController,
-                    curve: Curves.fastOutSlowIn,
-                  ),
-                  child: FilterPanel(
-                    brands: _brands,
-                    initialBrandId: _selectedBrandId,
-                    initialRange: _priceRange,
-                    maxLimit: maxLikedPrice,
-                    onApply: _applyFilterAndClose,
+              if (!isMobile)
+                Padding(
+                  padding: const EdgeInsets.only(top: searchBarHeight / 2),
+                  child: SizeTransition(
+                    sizeFactor: CurvedAnimation(
+                      parent: _animationController,
+                      curve: Curves.fastOutSlowIn,
+                    ),
+                    child: FilterPanel(
+                      brands: _brands,
+                      initialBrandId: _selectedBrandId,
+                      initialRange: _priceRange,
+                      maxLimit: maxLikedPrice,
+                      onApply: _applyFilterAndClose,
+                    ),
                   ),
                 ),
-              ),
               CustomSearchBar(
                 controller: _searchController,
                 hintText: "search.liked_hint".tr(), 
@@ -175,13 +216,14 @@ class _LikedPageState extends State<LikedPage>
         ),
         Expanded(
           child: GestureDetector(
-            onTap: _isFilterPanelVisible ? _toggleFilterPanel : null,
+            onTap: (_isFilterPanelVisible && !isMobile) ? _toggleFilterPanel : null,
             child: Padding(
-              padding: const EdgeInsets.only(top: 30),
+              padding: EdgeInsets.only(top: isMobile ? 15 : 30),
               child: ProductGrid(
                 products: filteredProducts,
-                maxCrossAxisExtent: 420,
+                maxCrossAxisExtent: isMobile ? 350 : 420,
                 onProductSelected: widget.onProductSelected,
+                padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 20),
               ),
             ),
           ),

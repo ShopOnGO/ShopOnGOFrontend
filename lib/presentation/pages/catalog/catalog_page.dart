@@ -120,12 +120,15 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
 
   void _onApplyFiltersLocal(RangeValues range, int? brandId) {
     widget.onApplyFilters?.call(range, brandId);
-    _toggleFilterPanel();
+    if (MediaQuery.of(context).size.width < 650) {
+      Navigator.pop(context);
+    } else {
+      _toggleFilterPanel();
+    }
   }
 
   void _runFilter() {
     if (_allProducts.isEmpty) return;
-
     final queryLower = widget.searchController.text.toLowerCase().trim();
 
     setState(() {
@@ -135,62 +138,82 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
           final brandMatches = product.brand.name.toLowerCase().contains(queryLower);
           if (!nameMatches && !brandMatches) return false;
         }
-
         if (product.variants.isNotEmpty) {
           bool anyVariantInPriceRange = product.variants.any((v) => 
             v.price >= widget.priceRange.start && v.price <= widget.priceRange.end
           );
           if (!anyVariantInPriceRange) return false;
         }
-
         if (widget.selectedBrandId != null) {
-          if (product.brand.id != widget.selectedBrandId) {
-            return false;
-          }
+          if (product.brand.id != widget.selectedBrandId) return false;
         }
-
         return true;
       }).toList();
     });
   }
 
   void _toggleFilterPanel() {
-    setState(() {
-      _isFilterPanelVisible = !_isFilterPanelVisible;
-      if (_isFilterPanelVisible) {
-        _animationController.forward();
-      } else {
-        _animationController.reverse();
-      }
-    });
+    final bool isMobile = MediaQuery.of(context).size.width < 650;
+
+    if (isMobile) {
+      _logger.i('Catalog: Opening mobile filter sheet');
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+        ),
+        builder: (context) => FilterPanel(
+          brands: _brands,
+          initialBrandId: widget.selectedBrandId,
+          initialRange: widget.priceRange,
+          maxLimit: _maxPriceLimit,
+          onApply: _onApplyFiltersLocal,
+          isMobile: true,
+        ),
+      );
+    } else {
+      setState(() {
+        _isFilterPanelVisible = !_isFilterPanelVisible;
+        if (_isFilterPanelVisible) {
+          _animationController.forward();
+        } else {
+          _animationController.reverse();
+        }
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final bool isMobile = MediaQuery.of(context).size.width < 650;
     const double searchBarHeight = 50.0;
+    final double horizontalPadding = isMobile ? 16.0 : 45.0;
 
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(45, 5, 45, 0),
+          padding: EdgeInsets.fromLTRB(horizontalPadding, 5, horizontalPadding, 0),
           child: Stack(
             children: [
-              Padding(
-                padding: const EdgeInsets.only(top: searchBarHeight / 2),
-                child: SizeTransition(
-                  sizeFactor: CurvedAnimation(
-                    parent: _animationController,
-                    curve: Curves.fastOutSlowIn,
-                  ),
-                  child: FilterPanel(
-                    brands: _brands,
-                    initialBrandId: widget.selectedBrandId,
-                    initialRange: widget.priceRange,
-                    maxLimit: _maxPriceLimit,
-                    onApply: _onApplyFiltersLocal,
+              if (!isMobile)
+                Padding(
+                  padding: const EdgeInsets.only(top: searchBarHeight / 2),
+                  child: SizeTransition(
+                    sizeFactor: CurvedAnimation(
+                      parent: _animationController,
+                      curve: Curves.fastOutSlowIn,
+                    ),
+                    child: FilterPanel(
+                      brands: _brands,
+                      initialBrandId: widget.selectedBrandId,
+                      initialRange: widget.priceRange,
+                      maxLimit: _maxPriceLimit,
+                      onApply: _onApplyFiltersLocal,
+                    ),
                   ),
                 ),
-              ),
 
               CustomSearchBar(
                 controller: widget.searchController,
@@ -206,13 +229,14 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
         
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.only(top: 30),
+            padding: EdgeInsets.only(top: isMobile ? 15 : 30),
             child: _isLoading 
                 ? Center(child: Text('catalog.loading'.tr()))
                 : ProductGrid(
                     products: _filteredProducts,
-                    maxCrossAxisExtent: 280,
+                    maxCrossAxisExtent: isMobile ? 350 : 280,
                     onProductSelected: widget.onProductSelected,
+                    padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 20),
                   ),
           ),
         ),
