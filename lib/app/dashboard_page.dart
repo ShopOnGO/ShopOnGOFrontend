@@ -128,6 +128,7 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 650;
+    const double bottomNavbarHeight = 95.0;
 
     final pages = [
       MainPage(
@@ -182,7 +183,6 @@ class _DashboardPageState extends State<DashboardPage> {
                           )
                         : Theme.of(context).textTheme.headlineLarge,
                   ),
-
                   if (!isMobile) ...[
                     const SizedBox(width: 16),
                     Expanded(
@@ -193,11 +193,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                     ),
                   ],
-
                   const SizedBox(width: 16),
-
                   if (isMobile) const Spacer(),
-
                   TextButton(
                     onPressed: _toggleLanguage,
                     style: TextButton.styleFrom(
@@ -207,10 +204,6 @@ class _DashboardPageState extends State<DashboardPage> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      minimumSize: isMobile ? const Size(55, 45) : null,
-                      padding: isMobile
-                          ? const EdgeInsets.symmetric(horizontal: 12)
-                          : null,
                     ),
                     child: Text(
                       "lang_code".tr(),
@@ -221,9 +214,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                     ),
                   ),
-
                   const SizedBox(width: 8),
-
                   IconButton(
                     icon: Icon(Icons.brightness_6, size: isMobile ? 28 : 24),
                     onPressed: () {
@@ -241,26 +232,32 @@ class _DashboardPageState extends State<DashboardPage> {
         children: [
           pages[currentIndex],
 
+          if (isProductDetailOpen)
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: _closeProductDetail,
+                child: Container(color: Colors.black.withValues(alpha: 0.4)),
+              ),
+            ),
+
           IgnorePointer(
             ignoring: !isProductDetailOpen,
             child: AnimatedOpacity(
               opacity: isProductDetailOpen ? 1.0 : 0.0,
               duration: const Duration(milliseconds: 200),
-              child: isProductDetailOpen
-                  ? ProductDetailPage(
-                      product: _selectedProduct!,
-                      onClose: _closeProductDetail,
-                    )
-                  : const SizedBox.shrink(),
-            ),
-          ),
-
-          if (isProductDetailOpen)
-            Positioned.fill(
-              child: IgnorePointer(
-                child: Container(color: Colors.black.withValues(alpha: 0.2)),
+              child: Padding(
+                padding: EdgeInsets.only(
+                  bottom: isMobile ? bottomNavbarHeight : 0,
+                ),
+                child: isProductDetailOpen
+                    ? ProductDetailPage(
+                        product: _selectedProduct!,
+                        onClose: _closeProductDetail,
+                      )
+                    : const SizedBox.shrink(),
               ),
             ),
+          ),
 
           Positioned(
             right: isMobile ? (_isChatOpen ? 12.0 : 24.0) : 24.0,

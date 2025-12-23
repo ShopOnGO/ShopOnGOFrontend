@@ -66,23 +66,21 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final bool isMobile = MediaQuery.of(context).size.width < 650;
-    
-    const double closeButtonIconSize = 40.0;
-    const double closeButtonDiameter = kMinInteractiveDimension;
 
-    return Scaffold(
-      bottomNavigationBar: isMobile ? _buildStickyMobileAction() : null,
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: isMobile ? 12.0 : 40.0, 
-            vertical: isMobile ? 16.0 : 32.0,
-          ),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6.0 + 4),
+    return Material(
+      color: Colors.transparent,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                isMobile ? 12.0 : 40.0,
+                isMobile ? 20.0 : 32.0,
+                isMobile ? 12.0 : 40.0,
+                isMobile ? 100.0 : 40.0,
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(10.0),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.secondaryContainer,
                   borderRadius: BorderRadius.circular(22.0),
@@ -100,94 +98,112 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   },
                 ),
               ),
-              Positioned(
-                top: isMobile ? -10 : -(closeButtonDiameter / 2),
-                right: isMobile ? -10 : -(closeButtonDiameter / 2),
-                child: Material(
-                  color: theme.scaffoldBackgroundColor,
-                  shape: const CircleBorder(),
-                  elevation: isMobile ? 4 : 0,
-                  child: IconButton(
-                    icon: Icon(
-                      Icons.close,
-                      color: theme.iconTheme.color,
-                      size: isMobile ? 30 : closeButtonIconSize,
-                    ),
-                    onPressed: widget.onClose,
-                    splashRadius: 28,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+
+          if (isMobile)
+            Positioned(
+              left: 12,
+              right: 12,
+              bottom: 12,
+              child: _buildStickyMobileAction(),
+            ),
+
+          Positioned(
+            top: isMobile ? 10 : 15,
+            right: isMobile ? 10 : 25,
+            child: Material(
+              color: theme.scaffoldBackgroundColor,
+              shape: const CircleBorder(),
+              elevation: 6,
+              child: IconButton(
+                icon: Icon(
+                  Icons.close,
+                  color: theme.iconTheme.color,
+                  size: isMobile ? 24 : 32,
+                ),
+                onPressed: widget.onClose,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildStickyMobileAction() {
     final theme = Theme.of(context);
+    if (widget.product.variants.isEmpty) return const SizedBox.shrink();
+
     final selectedVariant = widget.product.variants[_selectedVariantIndex];
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1), 
-            blurRadius: 10, 
-            offset: const Offset(0, -2),
-          )
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '${selectedVariant.price.toStringAsFixed(0)} ${"common.currency".tr()}',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold, 
-                  color: theme.colorScheme.primary,
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${selectedVariant.price.toStringAsFixed(0)} ${"common.currency".tr()}',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                  ),
                 ),
-              ),
-            ],
+                Text(
+                  "${"product.quantity_label".tr()}: $_quantity",
+                  style: theme.textTheme.bodySmall,
+                ),
+              ],
+            ),
           ),
-
+          const SizedBox(width: 8),
           Container(
             decoration: BoxDecoration(
-              color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.3),
+              color: theme.colorScheme.secondaryContainer.withValues(
+                alpha: 0.2,
+              ),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.remove, size: 20),
+                  icon: const Icon(Icons.remove, size: 18),
                   onPressed: () {
                     if (_quantity > 1) setState(() => _quantity--);
                   },
                 ),
-                Text('$_quantity', style: theme.textTheme.titleMedium),
                 IconButton(
-                  icon: const Icon(Icons.add, size: 20),
+                  icon: const Icon(Icons.add, size: 18),
                   onPressed: () => setState(() => _quantity++),
                 ),
               ],
             ),
           ),
-
+          const SizedBox(width: 8),
           ElevatedButton(
             onPressed: () => _addToCart(selectedVariant),
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.colorScheme.primary,
               foregroundColor: theme.colorScheme.onPrimary,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.all(14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             child: const Icon(Icons.add_shopping_cart),
           ),
@@ -204,10 +220,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     );
     NotificationHelper.show(
       context,
-      message: 'product.cart_added_notify'.tr(args: [
-        widget.product.name,
-        _quantity.toString(),
-      ]),
+      message: 'product.cart_added_notify'.tr(
+        args: [widget.product.name, _quantity.toString()],
+      ),
     );
   }
 
@@ -262,9 +277,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       const SizedBox(height: 8),
                       Text(
                         widget.product.name,
-                        style: (isMobile ? textTheme.headlineSmall : textTheme.headlineMedium)?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style:
+                            (isMobile
+                                    ? textTheme.headlineSmall
+                                    : textTheme.headlineMedium)
+                                ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 16),
                       if (!isMobile)
@@ -306,8 +323,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             ),
           ),
         ),
-        
-        if (!isMobile || widget.product.variants.length > 1) 
+
+        if (!isMobile || widget.product.variants.length > 1)
           const SizedBox(height: 5),
 
         _buildPurchasePanel(context),
@@ -320,7 +337,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('product.description_label'.tr(), style: textTheme.titleLarge),
+                Text(
+                  'product.description_label'.tr(),
+                  style: textTheme.titleLarge,
+                ),
                 const SizedBox(height: 16),
                 Text(
                   widget.product.description.isNotEmpty
@@ -365,46 +385,47 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
-                        children: List.generate(widget.product.variants.length, (
-                          index,
-                        ) {
-                          final variant = widget.product.variants[index];
-                          final color = _getColorFromString(variant.colors);
-                          final isSelected = index == _selectedVariantIndex;
-                          return GestureDetector(
-                            onTap: () =>
-                                setState(() => _selectedVariantIndex = index),
-                            child: Container(
-                              margin: const EdgeInsets.only(right: 12),
-                              padding: const EdgeInsets.all(3),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: isSelected
-                                    ? Border.all(
-                                        color: theme.colorScheme.primary,
-                                        width: 2.5,
-                                    )
-                                    : null,
-                              ),
+                        children: List.generate(
+                          widget.product.variants.length,
+                          (index) {
+                            final variant = widget.product.variants[index];
+                            final color = _getColorFromString(variant.colors);
+                            final isSelected = index == _selectedVariantIndex;
+                            return GestureDetector(
+                              onTap: () =>
+                                  setState(() => _selectedVariantIndex = index),
                               child: Container(
-                                width: isMobile ? 30 : 36,
-                                height: isMobile ? 30 : 36,
+                                margin: const EdgeInsets.only(right: 12),
+                                padding: const EdgeInsets.all(3),
                                 decoration: BoxDecoration(
-                                  color: color,
                                   shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: theme.dividerColor.withValues(
-                                      alpha: 0.5,
+                                  border: isSelected
+                                      ? Border.all(
+                                          color: theme.colorScheme.primary,
+                                          width: 2.5,
+                                        )
+                                      : null,
+                                ),
+                                child: Container(
+                                  width: isMobile ? 30 : 36,
+                                  height: isMobile ? 30 : 36,
+                                  decoration: BoxDecoration(
+                                    color: color,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: theme.dividerColor.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                      width: color == const Color(0xFFF5F5F5)
+                                          ? 2
+                                          : 0,
                                     ),
-                                    width: color == const Color(0xFFF5F5F5)
-                                        ? 2
-                                        : 0,
                                   ),
                                 ),
                               ),
-                            ),
-                          );
-                        }),
+                            );
+                          },
+                        ),
                       ),
                     ),
                   ],
@@ -415,7 +436,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('product.quantity_label'.tr(), style: textTheme.titleMedium),
+                  Text(
+                    'product.quantity_label'.tr(),
+                    style: textTheme.titleMedium,
+                  ),
                   Container(
                     decoration: BoxDecoration(
                       color: theme.scaffoldBackgroundColor,
