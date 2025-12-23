@@ -15,11 +15,12 @@ class ChatProvider with ChangeNotifier {
   bool _isConnected = false;
   bool _isManagerMode = false;
   int? _currentUserId;
-  int? _activeTargetUserId; 
+  int? _activeTargetUserId;
   String? _currentToken;
   List<int> _waitingUsers = [];
 
-  final String _managerToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjc3ODc5MzkxNzcsInJvbGUiOiJtYW5hZ2VyIiwidXNlcl9pZCI6Mn0.NqNyE0yIyyumue9DWJXHmmUfjbWo5xN7zmnXvr3k_vU";
+  final String _managerToken =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjc3ODc5MzkxNzcsInJvbGUiOiJtYW5hZ2VyIiwidXNlcl9pZCI6Mn0.NqNyE0yIyyumue9DWJXHmmUfjbWo5xN7zmnXvr3k_vU";
 
   final List<ChatMessage> _messages = [];
   bool _hasUnreadMessages = false;
@@ -38,13 +39,15 @@ class ChatProvider with ChangeNotifier {
     return [
       ChatConversation(
         id: "main",
-        name: _isManagerMode 
-          ? (_activeTargetUserId != null ? "CONV_MANAGER_CHAT" : "CONV_WAITING") 
-          : "CONV_SUPPORT",
+        name: _isManagerMode
+            ? (_activeTargetUserId != null
+                  ? "CONV_MANAGER_CHAT"
+                  : "CONV_WAITING")
+            : "CONV_SUPPORT",
         avatarUrl: "",
         messages: _messages,
         unreadCount: _hasUnreadMessages ? 1 : 0,
-      )
+      ),
     ];
   }
 
@@ -87,24 +90,28 @@ class ChatProvider with ChangeNotifier {
 
       _channel!.stream.listen(
         (data) => _onMessageReceived(data),
-        onError: (err) { 
+        onError: (err) {
           logger.e('Chat: WebSocket Stream Error', error: err);
-          _isConnected = false; 
-          notifyListeners(); 
+          _isConnected = false;
+          notifyListeners();
         },
-        onDone: () { 
+        onDone: () {
           logger.i('Chat: WebSocket Connection Closed by Server');
-          _isConnected = false; 
-          notifyListeners(); 
+          _isConnected = false;
+          notifyListeners();
         },
       );
-      
+
       if (_isManagerMode) {
         logger.d('Chat: Manager mode active, requesting user list');
         sendCommand("list");
       }
     } catch (e, stackTrace) {
-      logger.e('Chat: WebSocket Connection Exception', error: e, stackTrace: stackTrace);
+      logger.e(
+        'Chat: WebSocket Connection Exception',
+        error: e,
+        stackTrace: stackTrace,
+      );
       _isConnected = false;
       notifyListeners();
     }
@@ -114,7 +121,7 @@ class ChatProvider with ChangeNotifier {
     logger.d('Chat: WS Incoming Raw Data: $data');
     try {
       final json = jsonDecode(data);
-      
+
       if (json['payload'] != null && json['payload'] is List) {
         _waitingUsers = List<int>.from(json['payload']);
         logger.i('Chat: Updated waiting users: $_waitingUsers');
@@ -122,6 +129,13 @@ class ChatProvider with ChangeNotifier {
       }
 
       final message = ChatMessage.fromServerJson(json, _currentUserId ?? 0);
+      if (message.isSentByMe && message.type != "system") {
+        logger.d(
+          'Chat: Ignored echo message from server to prevent duplication.',
+        );
+        return;
+      }
+
       _messages.add(message);
       _hasUnreadMessages = true;
       logger.d('Chat: New message added. Count: ${_messages.length}');
@@ -145,14 +159,18 @@ class ChatProvider with ChangeNotifier {
       final uri = Uri.parse(ApiConfig.mediaUploadEndpoint);
       var request = http.MultipartRequest('POST', uri);
 
-      final mimeType = fileName.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
-      
-      request.files.add(http.MultipartFile.fromBytes(
-        'file', 
-        bytes,
-        filename: fileName,
-        contentType: MediaType.parse(mimeType),
-      ));
+      final mimeType = fileName.toLowerCase().endsWith('.png')
+          ? 'image/png'
+          : 'image/jpeg';
+
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'file',
+          bytes,
+          filename: fileName,
+          contentType: MediaType.parse(mimeType),
+        ),
+      );
 
       if (_currentToken != null) {
         request.headers['Authorization'] = 'Bearer $_currentToken';
@@ -170,23 +188,30 @@ class ChatProvider with ChangeNotifier {
           "content": imageUrl,
           "type": "image",
           "file_name": fileName,
-          if (_isManagerMode && _activeTargetUserId != null) "user_id": _activeTargetUserId,
+          if (_isManagerMode && _activeTargetUserId != null)
+            "user_id": _activeTargetUserId,
         };
 
         _channel!.sink.add(jsonEncode(socketPayload));
-        
-        _messages.add(ChatMessage(
-          imageUrl: imageUrl,
-          type: "image",
-          timestamp: DateTime.now(),
-          isSentByMe: true,
-          fromId: _currentUserId,
-        ));
+
+        _messages.add(
+          ChatMessage(
+            imageUrl: imageUrl,
+            type: "image",
+            timestamp: DateTime.now(),
+            isSentByMe: true,
+            fromId: _currentUserId,
+          ),
+        );
       } else {
         logger.e('Chat: Media Upload Failed. Status: ${response.statusCode}');
       }
     } catch (e, stackTrace) {
-      logger.e('Chat: Exception during upload', error: e, stackTrace: stackTrace);
+      logger.e(
+        'Chat: Exception during upload',
+        error: e,
+        stackTrace: stackTrace,
+      );
     } finally {
       _isUploading = false;
       notifyListeners();
@@ -212,7 +237,7 @@ class ChatProvider with ChangeNotifier {
       _activeTargetUserId = null;
     }
 
-    final payload = { "command": cmd, if (targetId != null) "user_id": targetId };
+    final payload = {"command": cmd, if (targetId != null) "user_id": targetId};
     _channel!.sink.add(jsonEncode(payload));
     notifyListeners();
   }
@@ -226,18 +251,21 @@ class ChatProvider with ChangeNotifier {
     final payload = {
       "content": text,
       "type": "text",
-      if (_isManagerMode && _activeTargetUserId != null) "user_id": _activeTargetUserId,
+      if (_isManagerMode && _activeTargetUserId != null)
+        "user_id": _activeTargetUserId,
     };
 
     _channel!.sink.add(jsonEncode(payload));
 
-    _messages.add(ChatMessage(
-      text: text,
-      timestamp: DateTime.now(),
-      isSentByMe: true,
-      type: "text",
-      fromId: _currentUserId,
-    ));
+    _messages.add(
+      ChatMessage(
+        text: text,
+        timestamp: DateTime.now(),
+        isSentByMe: true,
+        type: "text",
+        fromId: _currentUserId,
+      ),
+    );
     notifyListeners();
   }
 
