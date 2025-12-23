@@ -24,11 +24,10 @@ class DashboardPage extends StatefulWidget {
 enum ProfileOverlay { none, settings, faq }
 
 class _DashboardPageState extends State<DashboardPage> {
-  
   int currentIndex = 0;
   final TextEditingController _searchController = TextEditingController();
-  
-  RangeValues _priceRange = const RangeValues(0, 300);
+
+  RangeValues _priceRange = const RangeValues(0, 10000);
   int? _selectedBrandId;
 
   Product? _selectedProduct;
@@ -82,7 +81,7 @@ class _DashboardPageState extends State<DashboardPage> {
     logger.i('Auth: Login Dialog requested');
     showDialog(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.6), 
+      barrierColor: Colors.black.withValues(alpha: 0.6),
       builder: (BuildContext dialogContext) {
         return LoginPage(
           onClose: () {
@@ -114,7 +113,7 @@ class _DashboardPageState extends State<DashboardPage> {
     });
     _onTabSelected(catalogPageIndex);
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final pages = [
@@ -142,13 +141,13 @@ class _DashboardPageState extends State<DashboardPage> {
         onSettingsRequested: () => _showProfileOverlay(ProfileOverlay.settings),
         onFaqRequested: () => _showProfileOverlay(ProfileOverlay.faq),
       ),
-      LikedPage(
-        onProductSelected: _selectProduct,
-      ),
+      LikedPage(onProductSelected: _selectProduct),
       CartPage(onProductSelected: _selectProduct),
     ];
 
-    bool isOverlayOpen = _selectedProduct != null || _activeProfileOverlay != ProfileOverlay.none;
+    bool isOverlayOpen =
+        _selectedProduct != null ||
+        _activeProfileOverlay != ProfileOverlay.none;
 
     return Scaffold(
       appBar: PreferredSize(
@@ -189,7 +188,7 @@ class _DashboardPageState extends State<DashboardPage> {
       body: Stack(
         children: [
           pages[currentIndex],
-          
+
           IgnorePointer(
             ignoring: _selectedProduct == null,
             child: AnimatedOpacity(

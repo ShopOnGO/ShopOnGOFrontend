@@ -27,7 +27,7 @@ class _LikedPageState extends State<LikedPage>
   String _searchQuery = '';
   bool _isFilterPanelVisible = false;
 
-  RangeValues _priceRange = const RangeValues(0, 500);
+  RangeValues _priceRange = const RangeValues(0, 10000);
   int? _selectedBrandId;
   List<Brand> _brands = [];
 
@@ -92,7 +92,6 @@ class _LikedPageState extends State<LikedPage>
   }
 
   void _applyFilterAndClose(RangeValues range, int? brandId) {
-    logger.d("LikedPage: Applying filters - Price: $range, BrandID: $brandId");
     setState(() {
       _priceRange = range;
       _selectedBrandId = brandId;
@@ -109,6 +108,14 @@ class _LikedPageState extends State<LikedPage>
         .map((item) => item.product)
         .toList();
 
+    double maxLikedPrice = 0;
+    for (var p in allLikedProducts) {
+      for (var v in p.variants) {
+        if (v.price > maxLikedPrice) maxLikedPrice = v.price;
+      }
+    }
+    if (maxLikedPrice == 0) maxLikedPrice = 1000;
+
     final filteredProducts = allLikedProducts.where((product) {
       if (_searchQuery.isNotEmpty) {
         final query = _searchQuery.toLowerCase();
@@ -118,10 +125,10 @@ class _LikedPageState extends State<LikedPage>
       }
 
       if (product.variants.isNotEmpty) {
-        final price = product.variants.first.price;
-        if (price < _priceRange.start || price > _priceRange.end) {
-          return false;
-        }
+        bool hasValidPrice = product.variants.any(
+          (v) => v.price >= _priceRange.start && v.price <= _priceRange.end,
+        );
+        if (!hasValidPrice) return false;
       }
 
       if (_selectedBrandId != null) {
@@ -150,6 +157,7 @@ class _LikedPageState extends State<LikedPage>
                     brands: _brands,
                     initialBrandId: _selectedBrandId,
                     initialRange: _priceRange,
+                    maxLimit: maxLikedPrice,
                     onApply: _applyFilterAndClose,
                   ),
                 ),

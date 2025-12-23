@@ -12,19 +12,27 @@ import '../models/product_variant.dart';
 class ProductService {
   final Map<int, String> _brandsCache = {};
 
-  Future<String?> uploadImage(Uint8List bytes, String fileName, String token) async {
+  Future<String?> uploadImage(
+    Uint8List bytes,
+    String fileName,
+    String token,
+  ) async {
     try {
       final uri = Uri.parse(ApiConfig.mediaUploadEndpoint);
       var request = http.MultipartRequest('POST', uri);
 
-      request.files.add(http.MultipartFile.fromBytes(
-        'file',
-        bytes,
-        filename: fileName,
-        contentType: MediaType.parse(
-          fileName.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg',
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'file',
+          bytes,
+          filename: fileName,
+          contentType: MediaType.parse(
+            fileName.toLowerCase().endsWith('.png')
+                ? 'image/png'
+                : 'image/jpeg',
+          ),
         ),
-      ));
+      );
 
       request.headers['Authorization'] = 'Bearer $token';
 
@@ -33,10 +41,14 @@ class ProductService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        logger.i('ProductService: Image uploaded successfully to ${data['url']}');
+        logger.i(
+          'ProductService: Image uploaded successfully to ${data['url']}',
+        );
         return data['url'];
       } else {
-        logger.w('ProductService: Upload failed with status ${response.statusCode}');
+        logger.w(
+          'ProductService: Upload failed with status ${response.statusCode}',
+        );
         return null;
       }
     } catch (e) {
@@ -45,7 +57,10 @@ class ProductService {
     }
   }
 
-  Future<bool> createProduct(Map<String, dynamic> productData, String token) async {
+  Future<bool> createProduct(
+    Map<String, dynamic> productData,
+    String token,
+  ) async {
     final url = Uri.parse('http://localhost:8081/products');
     logger.i('ProductService: Sending product data to 8081');
 
@@ -63,7 +78,9 @@ class ProductService {
         logger.i('ProductService: Product created successfully');
         return true;
       } else {
-        logger.e('ProductService: Failed to create product. Body: ${response.body}');
+        logger.e(
+          'ProductService: Failed to create product. Body: ${response.body}',
+        );
         return false;
       }
     } catch (e) {
@@ -72,14 +89,17 @@ class ProductService {
     }
   }
 
-
   Future<List<Brand>> getAllBrands() async {
     final uri = Uri.parse(ApiConfig.brandsEndpoint);
     try {
       final response = await http.get(uri);
       if (response.statusCode == 200) {
-        final List<dynamic> brandsJson = json.decode(utf8.decode(response.bodyBytes));
-        List<Brand> brands = brandsJson.map((json) => Brand.fromJson(json)).toList();
+        final List<dynamic> brandsJson = json.decode(
+          utf8.decode(response.bodyBytes),
+        );
+        List<Brand> brands = brandsJson
+            .map((json) => Brand.fromJson(json))
+            .toList();
         for (var b in brands) {
           _brandsCache[b.id] = b.name;
         }
@@ -128,7 +148,7 @@ class ProductService {
     ''';
 
     final Map<String, dynamic> variables = {
-      "in": {"limit": 100, "page": 1}
+      "in": {"limit": 100, "page": 1},
     };
 
     try {
@@ -142,13 +162,18 @@ class ProductService {
       );
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+        final Map<String, dynamic> jsonResponse = json.decode(
+          utf8.decode(response.bodyBytes),
+        );
         if (jsonResponse['errors'] != null) return [];
         final data = jsonResponse['data'];
         if (data == null || data['searchProducts'] == null) return [];
-        
-        final List<dynamic> productsJson = data['searchProducts']['products'] ?? [];
-        return productsJson.map((jsonItem) => _mapGraphqlProduct(jsonItem)).toList();
+
+        final List<dynamic> productsJson =
+            data['searchProducts']['products'] ?? [];
+        return productsJson
+            .map((jsonItem) => _mapGraphqlProduct(jsonItem))
+            .toList();
       }
       return [];
     } catch (e) {
@@ -163,17 +188,26 @@ class ProductService {
   }
 
   Product _mapGraphqlProduct(Map<String, dynamic> json) {
-    int productId = json['id'] is int ? json['id'] : int.tryParse(json['id'].toString()) ?? 0;
-    List<String> productImages = (json['image_urls'] as List?)?.map((e) => e.toString()).toList() ?? [];
+    int productId = json['id'] is int
+        ? json['id']
+        : int.tryParse(json['id'].toString()) ?? 0;
+    List<String> productImages =
+        (json['image_urls'] as List?)?.map((e) => e.toString()).toList() ?? [];
 
     var variantList = json['variants'] as List? ?? [];
     List<ProductVariant> variants = variantList.map((v) {
-      int vId = v['variant_id'] is int ? v['variant_id'] : int.tryParse(v['variant_id'].toString()) ?? 0;
-      List<String> variantImages = (v['image_urls'] as List?)?.map((e) => e.toString()).toList() ?? [];
+      int vId = v['variant_id'] is int
+          ? v['variant_id']
+          : int.tryParse(v['variant_id'].toString()) ?? 0;
+      List<String> variantImages =
+          (v['image_urls'] as List?)?.map((e) => e.toString()).toList() ?? [];
       if (variantImages.isEmpty) variantImages = List.from(productImages);
 
       String colorStr = v['colors']?.toString() ?? 'Стандарт';
-      colorStr = colorStr.replaceAll('[', '').replaceAll(']', '').replaceAll('"', '');
+      colorStr = colorStr
+          .replaceAll('[', '')
+          .replaceAll(']', '')
+          .replaceAll('"', '');
 
       return ProductVariant(
         id: vId,
@@ -205,11 +239,24 @@ class ProductService {
       name: json['name'] ?? 'Без названия',
       description: json['description'] ?? '',
       imageURLs: productImages,
-      brand: Brand(id: brandId, name: _brandsCache[brandId] ?? 'Бренд #$brandId', description: '', logo: '', videoUrl: ''),
-      category: Category(id: categoryId, name: 'Категория #$categoryId', description: '', imageUrl: ''),
+      brand: Brand(
+        id: brandId,
+        name: _brandsCache[brandId] ?? 'Бренд #$brandId',
+        description: '',
+        logo: '',
+        videoUrl: '',
+      ),
+      category: Category(
+        id: categoryId,
+        name: 'Категория #$categoryId',
+        description: '',
+        imageUrl: '',
+      ),
       variants: variants,
       isActive: json['is_active'] ?? true,
-      videoURLs: (json['video_urls'] as List?)?.map((e) => e.toString()).toList() ?? [],
+      videoURLs:
+          (json['video_urls'] as List?)?.map((e) => e.toString()).toList() ??
+          [],
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
