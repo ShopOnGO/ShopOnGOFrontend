@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class OrderSummaryCard extends StatefulWidget {
   final double totalAmount;
@@ -22,7 +23,7 @@ class _OrderSummaryCardState extends State<OrderSummaryCard> {
   void _validateAndSubmit() {
     if (_textController.text.trim().isEmpty) {
       setState(() {
-        _errorMessage = 'Пожалуйста, заполните это поле';
+        _errorMessage = 'cart.validation_error'.tr();
       });
     } else {
       setState(() {
@@ -31,7 +32,7 @@ class _OrderSummaryCardState extends State<OrderSummaryCard> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Заказ успешно оформлен'),
+          content: Text('cart.order_success'.tr()),
           backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(12),
@@ -71,7 +72,10 @@ class _OrderSummaryCardState extends State<OrderSummaryCard> {
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
                 child: Center(
                   child: Text(
-                    "ИТОГ: ${widget.totalAmount.toStringAsFixed(0)} BYN",
+                    'cart.total'.tr(args: [
+                      widget.totalAmount.toStringAsFixed(0),
+                      'common.currency'.tr()
+                    ]),
                     style: textTheme.headlineSmall,
                   ),
                 ),
@@ -85,7 +89,7 @@ class _OrderSummaryCardState extends State<OrderSummaryCard> {
                   expands: true,
                   textAlignVertical: TextAlignVertical.top,
                   decoration: InputDecoration(
-                    hintText: "Уточнения...",
+                    hintText: "cart.notes_hint".tr(),
                     hintStyle: TextStyle(
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
@@ -146,7 +150,7 @@ class _OrderSummaryCardState extends State<OrderSummaryCard> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: Text("ЗАКАЗАТЬ", style: textTheme.titleMedium),
+                child: Text("cart.checkout_btn".tr(), style: textTheme.titleMedium),
               ),
             ],
           ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../data/models/product.dart';
 import '../../../data/providers/cart_provider.dart';
 import '../../../data/providers/liked_provider.dart';
@@ -38,16 +39,22 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   Color _getColorFromString(String colorName) {
     switch (colorName.toLowerCase()) {
       case 'черный':
+      case 'black':
         return Colors.black;
       case 'белый':
+      case 'white':
         return const Color(0xFFF5F5F5);
       case 'синий':
+      case 'blue':
         return Colors.blue;
       case 'красный':
+      case 'red':
         return Colors.red;
       case 'зеленый':
+      case 'green':
         return Colors.green;
       case 'серый':
+      case 'grey':
         return Colors.grey;
       default:
         return Colors.black;
@@ -166,7 +173,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        '${selectedVariant.price.toStringAsFixed(0)} BYN',
+                        '${selectedVariant.price.toStringAsFixed(0)} ${"common.currency".tr()}',
                         style: textTheme.headlineSmall?.copyWith(
                           color: theme.colorScheme.primary,
                           fontWeight: FontWeight.w700,
@@ -187,8 +194,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     NotificationHelper.show(
                       context,
                       message: isLiked
-                          ? 'Удалено из избранного'
-                          : 'Добавлено в избранное!',
+                          ? 'product.fav_removed'.tr()
+                          : 'product.fav_added'.tr(),
                     );
                   },
                   icon: Icon(
@@ -215,12 +222,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('Описание', style: textTheme.titleLarge),
+                Text('product.description_label'.tr(), style: textTheme.titleLarge),
                 const SizedBox(height: 16),
                 Text(
                   widget.product.description.isNotEmpty
                       ? widget.product.description
-                      : 'Описание отсутствует.',
+                      : 'product.no_description'.tr(),
                   style: textTheme.bodyLarge?.copyWith(height: 1.6),
                 ),
               ],
@@ -249,7 +256,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Цвет: ${selectedVariant.colors}',
+                      'product.color_label'.tr(args: [selectedVariant.colors]),
                       style: textTheme.titleMedium,
                     ),
                     const SizedBox(height: 16),
@@ -302,7 +309,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Количество', style: textTheme.titleMedium),
+                Text('product.quantity_label'.tr(), style: textTheme.titleMedium),
                 Container(
                   decoration: BoxDecoration(
                     color: theme.scaffoldBackgroundColor,
@@ -341,8 +348,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   );
                   NotificationHelper.show(
                     context,
-                    message:
-                        '${widget.product.name} (x$_quantity) добавлен в корзину!',
+                    message: 'product.cart_added_notify'.tr(args: [
+                      widget.product.name,
+                      _quantity.toString(),
+                    ]),
                   );
                 },
 
@@ -354,7 +363,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                child: const Text('Добавить в корзину'),
+                child: Text('product.add_to_cart_btn'.tr()),
               ),
             ),
           ],

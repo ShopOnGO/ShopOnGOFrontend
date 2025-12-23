@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class SettingsPage extends StatelessWidget {
   final VoidCallback onClose;
@@ -9,13 +10,14 @@ class SettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return _buildWrapper(
       context,
-      title: "Настройки",
-      child: const Center(
+      title: "settings.title".tr(),
+      child: Center(
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 60.0),
+          padding: const EdgeInsets.symmetric(vertical: 60.0, horizontal: 24.0),
           child: Text(
-            "Пример окна настроек",
-            style: TextStyle(fontSize: 18),
+            "settings.placeholder".tr(),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 18),
           ),
         ),
       ),

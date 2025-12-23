@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../data/providers/auth_provider.dart';
 
 class LoginPage extends StatefulWidget {
@@ -122,7 +123,7 @@ class _LoginPageState extends State<LoginPage> {
                     children: [
                       const SizedBox(height: 16),
                       Text(
-                        _isLoginMode ? 'Вход в аккаунт' : 'Регистрация',
+                        _isLoginMode ? 'auth.login_title'.tr() : 'auth.register_title'.tr(),
                         textAlign: TextAlign.center,
                         style: textTheme.headlineSmall,
                       ),
@@ -132,13 +133,13 @@ class _LoginPageState extends State<LoginPage> {
                           controller: _nameController,
                           textCapitalization: TextCapitalization.words,
                           decoration: _buildDecoration(
-                            label: 'Имя',
+                            label: 'auth.name_label'.tr(),
                             icon: Icons.person_outline,
                             context: context,
                           ),
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
-                              return 'Пожалуйста, введите имя';
+                              return 'auth.err_name'.tr();
                             }
                             return null;
                           },
@@ -149,13 +150,17 @@ class _LoginPageState extends State<LoginPage> {
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         decoration: _buildDecoration(
-                          label: 'Email',
+                          label: 'auth.email_label'.tr(),
                           icon: Icons.email_outlined,
                           context: context,
                         ),
                         validator: (value) {
-                          if (value == null || value.trim().isEmpty) return 'Введите Email';
-                          if (!_emailRegex.hasMatch(value.trim())) return 'Некорректный формат Email';
+                          if (value == null || value.trim().isEmpty) {
+                            return 'auth.err_email_empty'.tr();
+                          }
+                          if (!_emailRegex.hasMatch(value.trim())) {
+                            return 'auth.err_email_invalid'.tr();
+                          }
                           return null;
                         },
                       ),
@@ -164,7 +169,7 @@ class _LoginPageState extends State<LoginPage> {
                         controller: _passwordController,
                         obscureText: !_isPasswordVisible, 
                         decoration: _buildDecoration(
-                          label: 'Пароль',
+                          label: 'auth.password_label'.tr(),
                           icon: Icons.lock_outline,
                           context: context,
                           suffixIcon: IconButton(
@@ -181,8 +186,12 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         validator: (value) {
-                          if (value == null || value.isEmpty) return 'Введите пароль';
-                          if (!_isLoginMode && value.length < 6) return 'Минимум 6 символов';
+                          if (value == null || value.isEmpty) {
+                            return 'auth.err_pass_empty'.tr();
+                          }
+                          if (!_isLoginMode && value.length < 6) {
+                            return 'auth.err_pass_short'.tr();
+                          }
                           return null;
                         },
                       ),
@@ -200,7 +209,7 @@ class _LoginPageState extends State<LoginPage> {
                                 width: 20,
                                 child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                               )
-                            : Text(_isLoginMode ? 'ВОЙТИ' : 'ЗАРЕГИСТРИРОВАТЬСЯ'),
+                            : Text(_isLoginMode ? 'auth.btn_login'.tr() : 'auth.btn_register'.tr()),
                       ),
                       const SizedBox(height: 16),
                       Row(
@@ -208,7 +217,7 @@ class _LoginPageState extends State<LoginPage> {
                           const Expanded(child: Divider()),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: Text('или', style: textTheme.bodySmall),
+                            child: Text('auth.or'.tr(), style: textTheme.bodySmall),
                           ),
                           const Expanded(child: Divider()),
                         ],
@@ -222,7 +231,7 @@ class _LoginPageState extends State<LoginPage> {
                             _isPasswordVisible = false;
                           });
                         },
-                        child: Text(_isLoginMode ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти'),
+                        child: Text(_isLoginMode ? 'auth.no_account'.tr() : 'auth.has_account'.tr()),
                       ),
                     ],
                   ),

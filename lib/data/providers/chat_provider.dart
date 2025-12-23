@@ -39,8 +39,8 @@ class ChatProvider with ChangeNotifier {
       ChatConversation(
         id: "main",
         name: _isManagerMode 
-          ? (_activeTargetUserId != null ? "Чат с пользователем $_activeTargetUserId" : "Ожидание выбора") 
-          : "Поддержка Tailornado",
+          ? (_activeTargetUserId != null ? "CONV_MANAGER_CHAT" : "CONV_WAITING") 
+          : "CONV_SUPPORT",
         avatarUrl: "",
         messages: _messages,
         unreadCount: _hasUnreadMessages ? 1 : 0,
@@ -189,6 +189,13 @@ class ChatProvider with ChangeNotifier {
       logger.e('Chat: Exception during upload', error: e, stackTrace: stackTrace);
     } finally {
       _isUploading = false;
+      notifyListeners();
+    }
+  }
+
+  void markMessagesAsRead() {
+    if (_hasUnreadMessages) {
+      _hasUnreadMessages = false;
       notifyListeners();
     }
   }

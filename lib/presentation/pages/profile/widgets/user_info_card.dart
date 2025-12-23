@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../data/providers/auth_provider.dart';
 import '../../../../data/providers/chat_provider.dart';
 import 'profile_action_button.dart';
@@ -23,19 +24,19 @@ class UserInfoCard extends StatelessWidget {
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           elevation: 24.0,
-          title: const Text('Выход из аккаунта'),
-          content: const SingleChildScrollView(
+          title: Text('auth.logout_title'.tr()),
+          content: SingleChildScrollView(
             child: ListBody(
-              children: <Widget>[Text('Вы уверены, что хотите выйти?')],
+              children: <Widget>[Text('auth.logout_confirm'.tr())],
             ),
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Отмена'),
+              child: Text('auth.btn_cancel'.tr()),
               onPressed: () => Navigator.of(dialogContext).pop(),
             ),
             TextButton(
-              child: const Text('Выйти'),
+              child: Text('auth.btn_logout'.tr()),
               onPressed: () {
                 context.read<ChatProvider>().disconnect();
                 context.read<AuthProvider>().logout();
@@ -137,14 +138,14 @@ class UserInfoCard extends StatelessWidget {
               icon: const Icon(Icons.edit_outlined),
               onPressed: () => _showEditProfileDialog(context),
               style: buttonStyle,
-              tooltip: 'Редактировать профиль',
+              tooltip: 'profile.edit_title'.tr(),
             ),
             const SizedBox(width: 8),
             IconButton(
               icon: const Icon(Icons.logout),
               onPressed: () => _showLogoutConfirmationDialog(context),
               style: buttonStyle,
-              tooltip: 'Выйти',
+              tooltip: 'auth.btn_logout'.tr(),
             ),
           ],
         ),
@@ -152,12 +153,15 @@ class UserInfoCard extends StatelessWidget {
         
         if (user.role == 'seller') ...[
           Text(
-            "Панель продавца",
-            style: textTheme.labelLarge?.copyWith(color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
+            "profile.seller_panel".tr(),
+            style: textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.primary, 
+              fontWeight: FontWeight.bold
+            ),
           ),
           const SizedBox(height: 8),
           ProfileActionButton(
-            text: "Добавить новый товар",
+            text: "profile.add_product".tr(),
             trailing: Icon(Icons.add_box_outlined, color: theme.colorScheme.primary),
             onTap: () => _showAddProductDialog(context),
           ),
@@ -165,7 +169,7 @@ class UserInfoCard extends StatelessWidget {
         ],
 
         ProfileActionButton(
-          text: "Настройки",
+          text: "profile.settings".tr(),
           onTap: onSettingsTap,
         ),
       ],
@@ -184,13 +188,13 @@ class UserInfoCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Войдите, чтобы увидеть ваш профиль',
+              'profile.unauth_msg'.tr(),
               style: textTheme.titleMedium,
             ),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: onLoginRequested,
-              child: const Text('Войти в аккаунт'),
+              child: Text('profile.btn_go_login'.tr()),
             ),
           ],
         ),

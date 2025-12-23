@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/brand.dart';
 import '../../../data/providers/liked_provider.dart';
@@ -125,10 +126,10 @@ class _LikedPageState extends State<LikedPage>
       }
 
       if (product.variants.isNotEmpty) {
-        bool hasValidPrice = product.variants.any(
-          (v) => v.price >= _priceRange.start && v.price <= _priceRange.end,
+        bool hasValidVariant = product.variants.any((v) => 
+          v.price >= _priceRange.start && v.price <= _priceRange.end
         );
-        if (!hasValidPrice) return false;
+        if (!hasValidVariant) return false;
       }
 
       if (_selectedBrandId != null) {
@@ -164,7 +165,7 @@ class _LikedPageState extends State<LikedPage>
               ),
               CustomSearchBar(
                 controller: _searchController,
-                hintText: "Искать в избранном...",
+                hintText: "search.liked_hint".tr(), 
                 onSearchSubmitted: _onSearchSubmitted,
                 onClear: _onClearSearch,
                 onFilterTap: _toggleFilterPanel,

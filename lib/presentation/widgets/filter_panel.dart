@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../data/models/brand.dart';
 
 class FilterPanel extends StatefulWidget {
@@ -87,7 +88,7 @@ class _FilterPanelState extends State<FilterPanel> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Цена',
+                  'filter.price'.tr(),
                   style: textTheme.titleMedium?.copyWith(
                     color: colorScheme.onSecondaryContainer,
                   ),
@@ -105,7 +106,7 @@ class _FilterPanelState extends State<FilterPanel> {
               values: _currentRangeValues,
               min: 0,
               max: effectiveMax,
-              divisions: effectiveMax > 1000 ? 100 : effectiveMax.round(),
+              divisions: effectiveMax > 1000 ? 100 : effectiveMax.round().clamp(1, 1000),
               activeColor: colorScheme.primary,
               labels: RangeLabels(
                 '${_currentRangeValues.start.round()}',
@@ -119,7 +120,7 @@ class _FilterPanelState extends State<FilterPanel> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Бренды',
+              'filter.brands'.tr(),
               style: textTheme.titleMedium?.copyWith(
                 color: colorScheme.onSecondaryContainer,
               ),
@@ -128,10 +129,13 @@ class _FilterPanelState extends State<FilterPanel> {
             ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 150),
               child: widget.brands.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text('Загрузка брендов...'),
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          'filter.loading_brands'.tr(),
+                          style: TextStyle(color: colorScheme.onSecondaryContainer),
+                        ),
                       ),
                     )
                   : SingleChildScrollView(
@@ -173,7 +177,7 @@ class _FilterPanelState extends State<FilterPanel> {
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              child: const Text('Применить'),
+              child: Text('filter.apply'.tr()),
             ),
           ],
         ),

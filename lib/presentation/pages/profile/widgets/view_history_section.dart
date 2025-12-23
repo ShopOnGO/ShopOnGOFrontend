@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../data/providers/view_history_provider.dart';
 import '../../../widgets/product_grid.dart';
 import '../../../../data/models/product.dart';
@@ -33,7 +34,7 @@ class ViewHistorySection extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
             child: Text(
-              "История просмотра товаров",
+              "profile.history_title".tr(),
               style: textTheme.titleLarge?.copyWith(
                 color: theme.colorScheme.onSecondaryContainer,
               ),
@@ -48,7 +49,7 @@ class ViewHistorySection extends StatelessWidget {
                   ),
                   child: Center(
                     child: Text(
-                      'Вы еще не просматривали товары',
+                      'profile.history_empty'.tr(),
                       textAlign: TextAlign.center,
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: theme.colorScheme.onSecondaryContainer

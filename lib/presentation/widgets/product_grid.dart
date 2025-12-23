@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../data/models/product.dart';
 import 'product_card.dart';
 
@@ -35,7 +36,7 @@ class _ProductGridState extends State<ProductGrid> {
   @override
   Widget build(BuildContext context) {
     if (widget.products.isEmpty) {
-      return const Center(child: Text('Товары не найдены'));
+      return Center(child: Text('catalog.empty'.tr()));
     }
 
     return ScrollConfiguration(

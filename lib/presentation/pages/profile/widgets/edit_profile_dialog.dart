@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../data/providers/auth_provider.dart';
 
 class EditProfileDialog extends StatefulWidget {
@@ -57,8 +58,8 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
         if (!mounted) return;
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Пароль успешно изменен'),
+          SnackBar(
+            content: Text('profile.pass_changed'.tr()),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
           ),
@@ -138,13 +139,13 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
-                          'Редактирование профиля',
+                          'profile.edit_title'.tr(),
                           style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 32),
                         Text(
-                          "Личные данные",
+                          "profile.personal_info".tr(),
                           style: textTheme.titleMedium?.copyWith(
                             color: theme.colorScheme.primary,
                             fontWeight: FontWeight.bold,
@@ -155,7 +156,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                           controller: _nameController,
                           enabled: !isLoading,
                           decoration: _buildDecoration(
-                            label: 'Имя',
+                            label: 'auth.name_label'.tr(),
                             icon: Icons.person_outline,
                             context: context,
                           ),
@@ -171,7 +172,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                           child: Row(
                             children: [
                               Text(
-                                "Смена пароля",
+                                "profile.change_pass".tr(),
                                 style: textTheme.titleMedium?.copyWith(
                                   color: theme.colorScheme.primary,
                                   fontWeight: FontWeight.bold,
@@ -200,7 +201,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                                   obscureText: !_showOldPassword,
                                   enabled: !isLoading,
                                   decoration: _buildDecoration(
-                                    label: 'Текущий пароль',
+                                    label: 'profile.old_pass'.tr(),
                                     icon: Icons.lock_outline,
                                     context: context,
                                     suffixIcon: IconButton(
@@ -209,7 +210,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                                     ),
                                   ),
                                   validator: (value) {
-                                    if (value == null || value.isEmpty) return 'Введите текущий пароль';
+                                    if (value == null || value.isEmpty) return 'auth.err_pass_empty'.tr();
                                     return null;
                                   },
                                 ),
@@ -219,7 +220,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                                   obscureText: !_showNewPassword,
                                   enabled: !isLoading,
                                   decoration: _buildDecoration(
-                                    label: 'Новый пароль',
+                                    label: 'profile.new_pass'.tr(),
                                     icon: Icons.vpn_key_outlined,
                                     context: context,
                                     suffixIcon: IconButton(
@@ -228,8 +229,8 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                                     ),
                                   ),
                                   validator: (value) {
-                                    if (value == null || value.isEmpty) return 'Придумайте новый пароль';
-                                    if (value.length < 6) return 'Пароль слишком короткий (минимум 6 символов)';
+                                    if (value == null || value.isEmpty) return 'auth.err_pass_empty'.tr();
+                                    if (value.length < 6) return 'auth.err_pass_short'.tr();
                                     return null;
                                   },
                                 ),
@@ -239,7 +240,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                                   obscureText: !_showConfirmPassword,
                                   enabled: !isLoading,
                                   decoration: _buildDecoration(
-                                    label: 'Повторите новый пароль',
+                                    label: 'profile.confirm_pass'.tr(),
                                     icon: Icons.check_circle_outline,
                                     context: context,
                                     suffixIcon: IconButton(
@@ -248,8 +249,8 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                                     ),
                                   ),
                                   validator: (value) {
-                                    if (value == null || value.isEmpty) return 'Повторите пароль';
-                                    if (value != _newPasswordController.text) return 'Пароли не совпадают';
+                                    if (value == null || value.isEmpty) return 'auth.err_pass_empty'.tr();
+                                    if (value != _newPasswordController.text) return 'profile.err_pass_mismatch'.tr();
                                     return null;
                                   },
                                 ),
@@ -273,7 +274,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                 ),
-                                child: const Text("Отмена"),
+                                child: Text("auth.btn_cancel".tr()),
                               ),
                             ),
                             const SizedBox(width: 16),
@@ -294,7 +295,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                                       width: 20, 
                                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)
                                     ) 
-                                  : const Text("Сохранить"),
+                                  : Text("profile.btn_save".tr()),
                               ),
                             ),
                           ],

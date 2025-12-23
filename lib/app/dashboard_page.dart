@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../data/models/product.dart';
 import '../presentation/pages/cart/cart_page.dart';
 import '../presentation/pages/catalog/catalog_page.dart';
@@ -24,9 +25,10 @@ class DashboardPage extends StatefulWidget {
 enum ProfileOverlay { none, settings, faq }
 
 class _DashboardPageState extends State<DashboardPage> {
+  
   int currentIndex = 0;
   final TextEditingController _searchController = TextEditingController();
-
+  
   RangeValues _priceRange = const RangeValues(0, 10000);
   int? _selectedBrandId;
 
@@ -50,63 +52,52 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   void _selectProduct(Product product) {
-    logger.i('Navigation: Opening Product Detail for ID ${product.id}');
     setState(() {
       _selectedProduct = product;
     });
   }
 
   void _closeProductDetail() {
-    logger.d('Navigation: Closing Product Detail');
     setState(() {
       _selectedProduct = null;
     });
   }
 
   void _showProfileOverlay(ProfileOverlay type) {
-    logger.i('Navigation: Showing profile overlay: $type');
     setState(() {
       _activeProfileOverlay = type;
     });
   }
 
   void _closeProfileOverlay() {
-    logger.d('Navigation: Closing profile overlay');
     setState(() {
       _activeProfileOverlay = ProfileOverlay.none;
     });
   }
 
   void _showLoginDialog() {
-    logger.i('Auth: Login Dialog requested');
     showDialog(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.6),
+      barrierColor: Colors.black.withValues(alpha: 0.6), 
       builder: (BuildContext dialogContext) {
         return LoginPage(
-          onClose: () {
-            logger.d('Auth: Login Dialog closed');
-            Navigator.of(dialogContext).pop();
-          },
+          onClose: () => Navigator.of(dialogContext).pop(),
         );
       },
     );
   }
 
   void _toggleChat() {
-    logger.d('Chat: Toggle chat window. Current state open: $_isChatOpen');
     setState(() {
       _isChatOpen = !_isChatOpen;
     });
   }
 
   void _onSearchSubmitted() {
-    logger.i('Search: Global search submitted: "${_searchController.text}"');
     _onTabSelected(catalogPageIndex);
   }
 
   void _onApplyFilters(RangeValues range, int? brandId) {
-    logger.i('Filters: Global filter applied. Price: $range, Brand: $brandId');
     setState(() {
       _priceRange = range;
       _selectedBrandId = brandId;
@@ -114,6 +105,16 @@ class _DashboardPageState extends State<DashboardPage> {
     _onTabSelected(catalogPageIndex);
   }
 
+  void _toggleLanguage() {
+    if (context.locale == const Locale('ru')) {
+      context.setLocale(const Locale('en'));
+      logger.i('App: Language changed to English');
+    } else {
+      context.setLocale(const Locale('ru'));
+      logger.i('App: Language changed to Russian');
+    }
+  }
+  
   @override
   Widget build(BuildContext context) {
     final pages = [
@@ -141,13 +142,13 @@ class _DashboardPageState extends State<DashboardPage> {
         onSettingsRequested: () => _showProfileOverlay(ProfileOverlay.settings),
         onFaqRequested: () => _showProfileOverlay(ProfileOverlay.faq),
       ),
-      LikedPage(onProductSelected: _selectProduct),
+      LikedPage(
+        onProductSelected: _selectProduct,
+      ),
       CartPage(onProductSelected: _selectProduct),
     ];
 
-    bool isOverlayOpen =
-        _selectedProduct != null ||
-        _activeProfileOverlay != ProfileOverlay.none;
+    bool isOverlayOpen = _selectedProduct != null || _activeProfileOverlay != ProfileOverlay.none;
 
     return Scaffold(
       appBar: PreferredSize(
@@ -172,6 +173,24 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                   ),
                   const SizedBox(width: 16),
+                  
+                  TextButton(
+                    onPressed: _toggleLanguage,
+                    style: TextButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.3),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: Text(
+                      "lang_code".tr(),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(width: 8),
+
                   IconButton(
                     icon: const Icon(Icons.brightness_6),
                     onPressed: () {
@@ -188,7 +207,7 @@ class _DashboardPageState extends State<DashboardPage> {
       body: Stack(
         children: [
           pages[currentIndex],
-
+          
           IgnorePointer(
             ignoring: _selectedProduct == null,
             child: AnimatedOpacity(

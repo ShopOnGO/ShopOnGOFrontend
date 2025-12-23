@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class BalanceCard extends StatelessWidget {
   const BalanceCard({super.key});
@@ -14,7 +15,7 @@ class BalanceCard extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text("Баллы", style: textTheme.titleMedium),
+            Text("profile.balance_label".tr(), style: textTheme.titleMedium),
             const SizedBox(height: 4),
             Text(
               "1 250",

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../data/providers/chat_provider.dart';
 import '../../../../core/utils/app_logger.dart';
 import 'chat_message_bubble.dart';
@@ -38,7 +39,9 @@ class _ChatDetailViewState extends State<ChatDetailView> {
   void _handleSend() {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
+    
     logger.d('Chat Detail: User sending message: $text');
+    
     context.read<ChatProvider>().sendMessage(text: text);
     _controller.clear();
     _scrollToBottom();
@@ -46,6 +49,7 @@ class _ChatDetailViewState extends State<ChatDetailView> {
 
   Future<void> _handlePickFile() async {
     logger.d("Chat UI: Opening file picker...");
+    
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.image,
       withData: true,
@@ -55,6 +59,7 @@ class _ChatDetailViewState extends State<ChatDetailView> {
 
     if (result != null && result.files.first.bytes != null) {
       final file = result.files.first;
+      
       logger.i("Chat UI: File selected: ${file.name}, size: ${file.size}");
       
       await context.read<ChatProvider>().uploadAndSendImage(
@@ -62,7 +67,6 @@ class _ChatDetailViewState extends State<ChatDetailView> {
         file.name,
       );
       
-      if (!mounted) return;
       _scrollToBottom();
     } else {
       logger.w("Chat UI: File picker cancelled or failed");
@@ -82,11 +86,11 @@ class _ChatDetailViewState extends State<ChatDetailView> {
       });
     }
 
-    String title = "Поддержка Tailornado";
+    String title = "chat.support_name".tr();
     if (chatProvider.isManagerMode) {
       title = chatProvider.activeTargetUserId != null 
-          ? "Чат с пользователем #${chatProvider.activeTargetUserId}" 
-          : "Выберите пользователя слева";
+          ? "chat.chat_with_user".tr(args: [chatProvider.activeTargetUserId.toString()]) 
+          : "chat.select_user_hint".tr();
     }
 
     return Column(
@@ -111,7 +115,12 @@ class _ChatDetailViewState extends State<ChatDetailView> {
         ),
         Expanded(
           child: chatProvider.messages.isEmpty
-              ? const Center(child: Text("Сообщений нет", style: TextStyle(color: Colors.grey)))
+              ? Center(
+                  child: Text(
+                    "chat.no_messages".tr(), 
+                    style: const TextStyle(color: Colors.grey)
+                  )
+                )
               : ListView.builder(
                   controller: _scrollController,
                   padding: const EdgeInsets.all(16),
@@ -125,7 +134,7 @@ class _ChatDetailViewState extends State<ChatDetailView> {
             children: [
               IconButton(
                 icon: const Icon(Icons.image_outlined),
-                tooltip: "Отправить изображение",
+                tooltip: "chat.send_image_tooltip".tr(),
                 onPressed: chatProvider.isUploading ? null : _handlePickFile,
               ),
               Expanded(
@@ -133,7 +142,7 @@ class _ChatDetailViewState extends State<ChatDetailView> {
                   controller: _controller,
                   enabled: !chatProvider.isManagerMode || (chatProvider.isManagerMode && chatProvider.activeTargetUserId != null),
                   decoration: InputDecoration(
-                    hintText: 'Введите сообщение...',
+                    hintText: 'chat.hint'.tr(),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                   ),

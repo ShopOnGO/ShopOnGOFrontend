@@ -1,0 +1,145 @@
+{
+  "lang_code": "EN",
+  "tabs": {
+    "home": "Home",
+    "catalog": "Catalog",
+    "profile": "Profile",
+    "login": "Login",
+    "favorites": "Favorites",
+    "cart": "Cart"
+  },
+  "search": {
+    "placeholder": "Search...",
+    "main_hint": "Search products...",
+    "catalog_hint": "Search in catalog...",
+    "liked_hint": "Search in favorites..."
+  },
+  "filter": {
+    "price": "Price",
+    "brands": "Brands",
+    "loading_brands": "Loading brands...",
+    "apply": "Apply"
+  },
+  "common": {
+    "currency": "BYN"
+  },
+  "catalog": {
+    "loading": "Loading data...",
+    "empty": "No products found",
+    "no_variants": "No data"
+  },
+  "product": {
+    "description_label": "Description",
+    "no_description": "No description available.",
+    "color_label": "Color: {}",
+    "quantity_label": "Quantity",
+    "add_to_cart_btn": "Add to cart",
+    "fav_added": "Added to favorites!",
+    "fav_removed": "Removed from favorites",
+    "cart_added_notify": "{} (x{}) added to cart!"
+  },
+  "cart": {
+    "empty": "Your cart is empty",
+    "item_color": "Color: {}",
+    "item_price": "Price: {} {}",
+    "total": "TOTAL: {} {}",
+    "notes_hint": "Notes...",
+    "validation_error": "Please fill this field",
+    "order_success": "Order placed successfully",
+    "checkout_btn": "CHECKOUT"
+  },
+  "auth": {
+    "login_title": "Login",
+    "register_title": "Registration",
+    "name_label": "Name",
+    "email_label": "Email",
+    "password_label": "Password",
+    "btn_login": "LOGIN",
+    "btn_register": "SIGN UP",
+    "or": "or",
+    "no_account": "Don't have an account? Register",
+    "has_account": "Already have an account? Login",
+    "logout_title": "Logout",
+    "logout_confirm": "Are you sure you want to logout?",
+    "btn_cancel": "Cancel",
+    "btn_logout": "Logout",
+    "err_name": "Please enter your name",
+    "err_email_empty": "Enter Email",
+    "err_email_invalid": "Invalid Email format",
+    "err_pass_empty": "Enter password",
+    "err_pass_short": "At least 6 characters"
+  },
+  "profile": {
+    "unauth_msg": "Log in to see your profile",
+    "btn_go_login": "Log in to account",
+    "seller_panel": "Seller Panel",
+    "add_product": "Add new product",
+    "settings": "Settings",
+    "help": "Help",
+    "faq": "FAQ",
+    "balance_label": "Points",
+    "history_title": "Viewing History",
+    "history_empty": "You haven't viewed any products yet",
+    "edit_title": "Edit Profile",
+    "personal_info": "Personal Data",
+    "change_pass": "Change Password",
+    "old_pass": "Current Password",
+    "new_pass": "New Password",
+    "confirm_pass": "Confirm New Password",
+    "pass_changed": "Password changed successfully",
+    "btn_save": "Save",
+    "err_pass_mismatch": "Passwords do not match"
+  },
+  "add_product": {
+    "title": "Add New Product",
+    "photo_placeholder": "Product Photo",
+    "name": "Name",
+    "brand": "Brand",
+    "material": "Material",
+    "sku": "SKU",
+    "price": "Price ({})",
+    "stock": "Stock (pcs)",
+    "color": "Color",
+    "size": "Size",
+    "dimensions": "Packaging Dimensions",
+    "description": "Product Description",
+    "btn_cancel": "Cancel",
+    "btn_create": "CREATE PRODUCT",
+    "loading_brands": "Loading brands...",
+    "success": "Product successfully added!",
+    "err_no_image": "Please select a product image",
+    "err_name": "Enter name",
+    "err_required": "Required",
+    "err_price": "Specify price",
+    "err_stock": "Specify quantity",
+    "err_desc": "Enter description",
+    "err_image_upload": "Failed to upload image"
+  },
+  "chat": {
+    "title": "Chats",
+    "support_name": "Tailornado Support",
+    "no_messages": "No messages",
+    "hint": "Type a message...",
+    "send_image_tooltip": "Send image",
+    "manager_mode": "Manager Mode",
+    "refresh_list": "Refresh list",
+    "close_session": "Close session",
+    "waiting_response": "WAITING FOR RESPONSE",
+    "no_active_requests": "No active requests",
+    "client_label": "Client #{}",
+    "select_user_hint": "Select a user on the left",
+    "chat_with_user": "Chat with user #{}",
+    "waiting_choice": "Waiting for selection",
+    "media_preview": "Media",
+    "no_active_chats": "No active chats"
+  },
+  "faq": {
+    "title": "FAQ",
+    "example_q": "Example question?",
+    "example_a": "Example answer."
+  },
+  "settings": {
+    "title": "Settings",
+    "placeholder": "Settings blank page."
+  }
+}

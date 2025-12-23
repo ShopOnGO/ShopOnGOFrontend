@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class FaqPage extends StatelessWidget {
   final VoidCallback onClose;
@@ -9,17 +10,17 @@ class FaqPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return _buildWrapper(
       context,
-      title: "Частые вопросы",
+      title: "faq.title".tr(),
       child: ListView(
         shrinkWrap: true,
         padding: const EdgeInsets.all(8),
-        children: const [
+        children: [
           ExpansionTile(
-            title: Text("Пример вопроса"),
+            title: Text("faq.example_q".tr()),
             children: [
               Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text("Это пример ответа"),
+                padding: const EdgeInsets.all(16.0),
+                child: Text("faq.example_a".tr()),
               )
             ],
           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/brand.dart';
 import '../../../data/services/product_service.dart';
@@ -37,6 +38,7 @@ class _MainPageState extends State<MainPage> with SingleTickerProviderStateMixin
   List<Product> _products = [];
   List<Brand> _brands = [];
   bool _isLoading = true;
+  double _maxPriceLimit = 1000;
 
   @override
   void initState() {
@@ -63,12 +65,22 @@ class _MainPageState extends State<MainPage> with SingleTickerProviderStateMixin
       ]);
 
       if (mounted) {
+        final products = results[0] as List<Product>;
+        
+        double maxFound = 0;
+        for (var p in products) {
+          for (var v in p.variants) {
+            if (v.price > maxFound) maxFound = v.price;
+          }
+        }
+
         setState(() {
-          _products = results[0] as List<Product>;
+          _products = products;
           _brands = results[1] as List<Brand>;
+          _maxPriceLimit = maxFound > 0 ? maxFound : 1000;
           _isLoading = false;
         });
-        logger.d("MainPage: Products and brands successfully loaded");
+        logger.d("MainPage: Data loaded. Max price: $_maxPriceLimit");
       }
     } catch (e, stackTrace) {
       logger.e("MainPage: Error loading initial data", error: e, stackTrace: stackTrace);
@@ -88,7 +100,7 @@ class _MainPageState extends State<MainPage> with SingleTickerProviderStateMixin
   }
 
   void _handleFilterApply(RangeValues range, int? brandId) {
-    logger.i("MainPage: Applying global filters via MainPage");
+    logger.i("MainPage: Applying global filters");
     _toggleFilterPanel();
     widget.onApplyFilters?.call(range, brandId);
   }
@@ -112,12 +124,14 @@ class _MainPageState extends State<MainPage> with SingleTickerProviderStateMixin
                   ),
                   child: FilterPanel(
                     brands: _brands,
+                    maxLimit: _maxPriceLimit,
                     onApply: _handleFilterApply,
                   ),
                 ),
               ),
               CustomSearchBar(
                 controller: widget.searchController,
+                hintText: "search.main_hint".tr(),
                 onSearchChanged: widget.onSearchChanged,
                 onSearchSubmitted: widget.onSearchSubmitted,
                 onClear: widget.onClearSearch,

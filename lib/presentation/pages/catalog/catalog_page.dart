@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/brand.dart';
 import '../../../data/services/product_service.dart';
@@ -13,7 +14,7 @@ class CatalogPage extends StatefulWidget {
   final ValueChanged<String>? onSearchChanged;
   final VoidCallback? onSearchSubmitted;
   final VoidCallback? onClearSearch;
-
+  
   final RangeValues priceRange;
   final int? selectedBrandId;
   final Function(RangeValues, int?)? onApplyFilters;
@@ -25,7 +26,7 @@ class CatalogPage extends StatefulWidget {
     this.onSearchChanged,
     this.onSearchSubmitted,
     this.onClearSearch,
-    this.priceRange = const RangeValues(0, 10000),
+    this.priceRange = const RangeValues(0, 10000), 
     this.selectedBrandId,
     this.onApplyFilters,
   });
@@ -34,8 +35,7 @@ class CatalogPage extends StatefulWidget {
   State<CatalogPage> createState() => _CatalogPageState();
 }
 
-class _CatalogPageState extends State<CatalogPage>
-    with SingleTickerProviderStateMixin {
+class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStateMixin {
   final Logger _logger = Logger(
     printer: PrettyPrinter(methodCount: 0, colors: true, printEmojis: true),
   );
@@ -44,8 +44,8 @@ class _CatalogPageState extends State<CatalogPage>
   bool _isFilterPanelVisible = false;
 
   final ProductService _productService = ProductService();
-
-  List<Product> _allProducts = [];
+  
+  List<Product> _allProducts = [];       
   List<Product> _filteredProducts = [];
   List<Brand> _brands = [];
   bool _isLoading = true;
@@ -66,7 +66,7 @@ class _CatalogPageState extends State<CatalogPage>
   @override
   void didUpdateWidget(CatalogPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.priceRange != widget.priceRange ||
+    if (oldWidget.priceRange != widget.priceRange || 
         oldWidget.selectedBrandId != widget.selectedBrandId) {
       _runFilter();
     }
@@ -80,7 +80,7 @@ class _CatalogPageState extends State<CatalogPage>
   }
 
   Future<void> _loadData() async {
-    _logger.i('Catalog: Loading initial products and brands...');
+    _logger.i('Catalog: Loading data...');
     setState(() => _isLoading = true);
     try {
       final results = await Future.wait([
@@ -90,7 +90,7 @@ class _CatalogPageState extends State<CatalogPage>
 
       if (mounted) {
         final products = results[0] as List<Product>;
-
+        
         double maxFound = 0;
         for (var p in products) {
           for (var v in p.variants) {
@@ -104,15 +104,11 @@ class _CatalogPageState extends State<CatalogPage>
           _maxPriceLimit = maxFound > 0 ? maxFound : 1000;
           _isLoading = false;
         });
-        _logger.i('Catalog: Data loaded. Max price found: $_maxPriceLimit');
+        _logger.i('Catalog: Data loaded. Max price limit set to: $_maxPriceLimit');
         _runFilter();
       }
     } catch (e, stackTrace) {
-      _logger.e(
-        'Catalog: Failed to load data',
-        error: e,
-        stackTrace: stackTrace,
-      );
+      _logger.e('Catalog: Failed to load data', error: e, stackTrace: stackTrace);
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -136,19 +132,15 @@ class _CatalogPageState extends State<CatalogPage>
       _filteredProducts = _allProducts.where((product) {
         if (queryLower.isNotEmpty) {
           final nameMatches = product.name.toLowerCase().contains(queryLower);
-          final brandMatches = product.brand.name.toLowerCase().contains(
-            queryLower,
-          );
+          final brandMatches = product.brand.name.toLowerCase().contains(queryLower);
           if (!nameMatches && !brandMatches) return false;
         }
 
         if (product.variants.isNotEmpty) {
-          bool hasValidPrice = product.variants.any(
-            (v) =>
-                v.price >= widget.priceRange.start &&
-                v.price <= widget.priceRange.end,
+          bool anyVariantInPriceRange = product.variants.any((v) => 
+            v.price >= widget.priceRange.start && v.price <= widget.priceRange.end
           );
-          if (!hasValidPrice) return false;
+          if (!anyVariantInPriceRange) return false;
         }
 
         if (widget.selectedBrandId != null) {
@@ -202,7 +194,7 @@ class _CatalogPageState extends State<CatalogPage>
 
               CustomSearchBar(
                 controller: widget.searchController,
-                hintText: "Искать в каталоге...",
+                hintText: "search.catalog_hint".tr(),
                 onSearchChanged: null,
                 onSearchSubmitted: widget.onSearchSubmitted,
                 onClear: widget.onClearSearch,
@@ -211,12 +203,12 @@ class _CatalogPageState extends State<CatalogPage>
             ],
           ),
         ),
-
+        
         Expanded(
           child: Padding(
             padding: const EdgeInsets.only(top: 30),
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+            child: _isLoading 
+                ? Center(child: Text('catalog.loading'.tr()))
                 : ProductGrid(
                     products: _filteredProducts,
                     maxCrossAxisExtent: 280,

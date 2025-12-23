@@ -1,8 +1,8 @@
 import 'dart:typed_data';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../data/providers/auth_provider.dart';
 import '../../../data/services/product_service.dart';
 import '../../../data/models/brand.dart';
@@ -86,18 +86,13 @@ class _AddProductDialogState extends State<AddProductDialog> {
         _selectedFileBytes = result.files.first.bytes;
         _selectedFileName = result.files.first.name;
       });
-      logger.d("AddProduct: Image selected: $_selectedFileName");
     }
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedFileBytes == null || _selectedFileName == null) {
-      NotificationHelper.show(
-        context,
-        message: "Выберите изображение товара",
-        isError: true,
-      );
+      NotificationHelper.show(context, message: "add_product.err_no_image".tr(), isError: true);
       return;
     }
 
@@ -105,7 +100,6 @@ class _AddProductDialogState extends State<AddProductDialog> {
     final auth = context.read<AuthProvider>();
 
     try {
-      logger.i("AddProduct: Step 1 - Uploading image...");
       final String? fullImageUrl = await _productService.uploadImage(
         _selectedFileBytes!,
         _selectedFileName!,
@@ -113,19 +107,17 @@ class _AddProductDialogState extends State<AddProductDialog> {
       );
 
       if (fullImageUrl == null) {
-        throw Exception("Не удалось получить URL загруженного изображения");
+        throw Exception("add_product.err_image_upload".tr());
       }
-
-      logger.i("AddProduct: Image uploaded. URL: $fullImageUrl");
 
       final productData = {
         "name": _nameController.text.trim(),
         "description": _descController.text.trim(),
         "material": _materialController.text.trim(),
         "is_active": true,
-        "category_id": 5,
-        "brand_id": _selectedBrandId ?? 2,
-        "image_keys": [],
+        "category_id": 5, 
+        "brand_id": _selectedBrandId ?? 1,
+        "image_keys": [], 
         "video_keys": [],
         "variants": [
           {
@@ -140,32 +132,22 @@ class _AddProductDialogState extends State<AddProductDialog> {
             "images": [fullImageUrl],
             "min_order": 1,
             "dimensions": _dimensionsController.text.trim(),
-          },
-        ],
+          }
+        ]
       };
 
-      logger.d("AddProduct: Sending Final Payload: ${jsonEncode(productData)}");
-
-      final success = await _productService.createProduct(
-        productData,
-        auth.token!,
-      );
+      final success = await _productService.createProduct(productData, auth.token!);
 
       if (success) {
         if (!mounted) return;
-        NotificationHelper.show(context, message: "Товар успешно добавлен!");
+        NotificationHelper.show(context, message: "add_product.success".tr());
         Navigator.of(context).pop();
       } else {
-        throw Exception("Ошибка сервера при сохранении товара");
+        throw Exception("auth.err_server".tr());
       }
     } catch (e) {
-      logger.e("AddProduct Error", error: e);
       if (!mounted) return;
-      NotificationHelper.show(
-        context,
-        message: e.toString().replaceAll("Exception: ", ""),
-        isError: true,
-      );
+      NotificationHelper.show(context, message: e.toString().replaceAll("Exception: ", ""), isError: true);
     } finally {
       if (mounted) setState(() => _isProcessing = false);
     }
@@ -201,19 +183,13 @@ class _AddProductDialogState extends State<AddProductDialog> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          "Добавить новый товар",
-                          style: theme.textTheme.headlineSmall,
-                        ),
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.close),
-                        ),
+                        Text("add_product.title".tr(), style: theme.textTheme.headlineSmall),
+                        IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
                       ],
                     ),
                     const Divider(),
                     const SizedBox(height: 16),
-
+                    
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -224,39 +200,28 @@ class _AddProductDialogState extends State<AddProductDialog> {
                             child: Container(
                               height: 160,
                               decoration: BoxDecoration(
-                                color:
-                                    theme.colorScheme.surfaceContainerHighest,
+                                color: theme.colorScheme.surfaceContainerHighest,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(color: theme.dividerColor),
                               ),
                               child: _selectedFileBytes != null
                                   ? ClipRRect(
                                       borderRadius: BorderRadius.circular(12),
-                                      child: Image.memory(
-                                        _selectedFileBytes!,
-                                        fit: BoxFit.cover,
-                                      ),
+                                      child: Image.memory(_selectedFileBytes!, fit: BoxFit.cover),
                                     )
-                                  : const Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
+                                  : Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
-                                        Icon(
-                                          Icons.add_a_photo_outlined,
-                                          size: 40,
-                                        ),
-                                        SizedBox(height: 8),
-                                        Text(
-                                          "Фото товара",
-                                          textAlign: TextAlign.center,
-                                        ),
+                                        const Icon(Icons.add_a_photo_outlined, size: 40),
+                                        const SizedBox(height: 8),
+                                        Text("add_product.photo_placeholder".tr(), textAlign: TextAlign.center),
                                       ],
                                     ),
                             ),
                           ),
                         ),
                         const SizedBox(width: 20),
-
+                        
                         Expanded(
                           flex: 3,
                           child: Column(
@@ -264,89 +229,58 @@ class _AddProductDialogState extends State<AddProductDialog> {
                             children: [
                               TextFormField(
                                 controller: _nameController,
-                                decoration: _buildDecoration(
-                                  "Название",
-                                  Icons.shopping_bag_outlined,
-                                ),
-                                validator: (v) =>
-                                    v!.isEmpty ? "Введите название" : null,
+                                decoration: _buildDecoration("add_product.name".tr(), Icons.shopping_bag_outlined),
+                                validator: (v) => v!.isEmpty ? "add_product.err_name".tr() : null,
                               ),
                               const SizedBox(height: 16),
-
-                              _isLoadingBrands
-                                  ? const Center(
-                                      child: CircularProgressIndicator(),
-                                    )
-                                  : DropdownButtonFormField<int>(
-                                      initialValue: _selectedBrandId,
-                                      isExpanded: true,
-                                      decoration: _buildDecoration(
-                                        "Бренд",
-                                        Icons.business_outlined,
-                                      ),
-                                      items: _brands
-                                          .map(
-                                            (b) => DropdownMenuItem(
-                                              value: b.id,
-                                              child: Text(b.name),
-                                            ),
-                                          )
-                                          .toList(),
-                                      onChanged: (val) => setState(
-                                        () => _selectedBrandId = val,
-                                      ),
-                                    ),
+                              
+                              _isLoadingBrands 
+                                ? const Center(child: CircularProgressIndicator())
+                                : DropdownButtonFormField<int>(
+                                    initialValue: _selectedBrandId,
+                                    isExpanded: true,
+                                    decoration: _buildDecoration("add_product.brand".tr(), Icons.business_outlined),
+                                    items: _brands.map((b) => DropdownMenuItem(value: b.id, child: Text(b.name))).toList(),
+                                    onChanged: (val) => setState(() => _selectedBrandId = val),
+                                  ),
                             ],
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 24),
-
-                    Text(
-                      "Характеристики и Вариант",
-                      style: theme.textTheme.titleMedium,
-                    ),
+                    
+                    Text("profile.personal_info".tr(), style: theme.textTheme.titleMedium),
                     const SizedBox(height: 12),
-
+                    
                     Row(
                       children: [
                         Expanded(
                           child: TextFormField(
                             controller: _materialController,
-                            decoration: _buildDecoration(
-                              "Материал",
-                              Icons.layers_outlined,
-                            ),
+                            decoration: _buildDecoration("add_product.material".tr(), Icons.layers_outlined),
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: TextFormField(
                             controller: _skuController,
-                            decoration: _buildDecoration(
-                              "Артикул (SKU)",
-                              Icons.tag,
-                            ),
-                            validator: (v) => v!.isEmpty ? "Обязательно" : null,
+                            decoration: _buildDecoration("add_product.sku".tr(), Icons.tag),
+                            validator: (v) => v!.isEmpty ? "add_product.err_required".tr() : null,
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
-
+                    
                     Row(
                       children: [
                         Expanded(
                           child: TextFormField(
                             controller: _priceController,
                             keyboardType: TextInputType.number,
-                            decoration: _buildDecoration(
-                              "Цена (BYN)",
-                              Icons.payments_outlined,
-                            ),
-                            validator: (v) =>
-                                v!.isEmpty ? "Укажите цену" : null,
+                            decoration: _buildDecoration("add_product.price".tr(args: ['common.currency'.tr()]), Icons.payments_outlined),
+                            validator: (v) => v!.isEmpty ? "add_product.err_price".tr() : null,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -354,77 +288,54 @@ class _AddProductDialogState extends State<AddProductDialog> {
                           child: TextFormField(
                             controller: _stockController,
                             keyboardType: TextInputType.number,
-                            decoration: _buildDecoration(
-                              "Остаток (шт)",
-                              Icons.inventory_2_outlined,
-                            ),
-                            validator: (v) =>
-                                v!.isEmpty ? "Укажите кол-во" : null,
+                            decoration: _buildDecoration("add_product.stock".tr(), Icons.inventory_2_outlined),
+                            validator: (v) => v!.isEmpty ? "add_product.err_stock".tr() : null,
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
-
+                    
                     Row(
                       children: [
                         Expanded(
                           child: TextFormField(
                             controller: _colorController,
-                            decoration: _buildDecoration(
-                              "Цвет",
-                              Icons.palette_outlined,
-                            ),
+                            decoration: _buildDecoration("add_product.color".tr(), Icons.palette_outlined),
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: TextFormField(
                             controller: _sizeController,
-                            decoration: _buildDecoration(
-                              "Размер",
-                              Icons.straighten_outlined,
-                            ),
+                            decoration: _buildDecoration("add_product.size".tr(), Icons.straighten_outlined),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
-
+                    
                     TextFormField(
                       controller: _dimensionsController,
-                      decoration: _buildDecoration(
-                        "Габариты упаковки",
-                        Icons.aspect_ratio_outlined,
-                      ),
+                      decoration: _buildDecoration("add_product.dimensions".tr(), Icons.aspect_ratio_outlined),
                     ),
                     const SizedBox(height: 12),
-
+                    
                     TextFormField(
                       controller: _descController,
                       maxLines: 3,
-                      decoration: _buildDecoration(
-                        "Описание товара",
-                        Icons.description_outlined,
-                      ),
-                      validator: (v) => v!.isEmpty ? "Введите описание" : null,
+                      decoration: _buildDecoration("add_product.description".tr(), Icons.description_outlined),
+                      validator: (v) => v!.isEmpty ? "add_product.err_desc".tr() : null,
                     ),
                     const SizedBox(height: 32),
-
+                    
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         OutlinedButton(
-                          onPressed: _isProcessing
-                              ? null
-                              : () => Navigator.pop(context),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 16,
-                            ),
-                          ),
-                          child: const Text("Отмена"),
+                          onPressed: _isProcessing ? null : () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16)),
+                          child: Text("add_product.btn_cancel".tr()),
                         ),
                         const SizedBox(width: 16),
                         ElevatedButton(
@@ -432,21 +343,11 @@ class _AddProductDialogState extends State<AddProductDialog> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: theme.colorScheme.primary,
                             foregroundColor: theme.colorScheme.onPrimary,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 40,
-                              vertical: 16,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
                           ),
                           child: _isProcessing
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Text("СОЗДАТЬ ТОВАР"),
+                              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                              : Text("add_product.btn_create".tr()),
                         ),
                       ],
                     ),
