@@ -6,6 +6,7 @@ class FilterPanel extends StatefulWidget {
   final List<Brand> brands;
   final int? initialBrandId;
   final RangeValues? initialRange;
+  final double maxLimit;
 
   const FilterPanel({
     super.key,
@@ -13,6 +14,7 @@ class FilterPanel extends StatefulWidget {
     this.brands = const [],
     this.initialBrandId,
     this.initialRange,
+    this.maxLimit = 1000,
   });
 
   @override
@@ -26,18 +28,31 @@ class _FilterPanelState extends State<FilterPanel> {
   @override
   void initState() {
     super.initState();
-    _currentRangeValues = widget.initialRange ?? const RangeValues(0, 500);
+    _initRange();
     _selectedBrandId = widget.initialBrandId;
+  }
+
+  void _initRange() {
+    double start = widget.initialRange?.start ?? 0;
+    double end = widget.initialRange?.end ?? widget.maxLimit;
+
+    _currentRangeValues = RangeValues(
+      start.clamp(0, widget.maxLimit),
+      end.clamp(0, widget.maxLimit),
+    );
   }
 
   @override
   void didUpdateWidget(FilterPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.maxLimit != widget.maxLimit ||
+        oldWidget.initialRange != widget.initialRange) {
+      setState(() {
+        _initRange();
+      });
+    }
     if (oldWidget.initialBrandId != widget.initialBrandId) {
       _selectedBrandId = widget.initialBrandId;
-    }
-    if (oldWidget.initialRange != widget.initialRange && widget.initialRange != null) {
-      _currentRangeValues = widget.initialRange!;
     }
   }
 
@@ -46,6 +61,8 @@ class _FilterPanelState extends State<FilterPanel> {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
     final colorScheme = theme.colorScheme;
+
+    final double effectiveMax = widget.maxLimit > 0 ? widget.maxLimit : 100;
 
     return Container(
       decoration: BoxDecoration(
@@ -69,25 +86,31 @@ class _FilterPanelState extends State<FilterPanel> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Цена',
-                    style: textTheme.titleMedium
-                        ?.copyWith(color: colorScheme.onSecondaryContainer)),
+                Text(
+                  'Цена',
+                  style: textTheme.titleMedium?.copyWith(
+                    color: colorScheme.onSecondaryContainer,
+                  ),
+                ),
                 Text(
                   '${_currentRangeValues.start.round()} - ${_currentRangeValues.end.round()} BYN',
                   style: textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSecondaryContainer,
-                      fontWeight: FontWeight.bold),
+                    color: colorScheme.onSecondaryContainer,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
             RangeSlider(
               values: _currentRangeValues,
               min: 0,
-              max: 500,
-              divisions: 50,
+              max: effectiveMax,
+              divisions: effectiveMax > 1000 ? 100 : effectiveMax.round(),
               activeColor: colorScheme.primary,
-              labels: RangeLabels('${_currentRangeValues.start.round()}',
-                  '${_currentRangeValues.end.round()}'),
+              labels: RangeLabels(
+                '${_currentRangeValues.start.round()}',
+                '${_currentRangeValues.end.round()}',
+              ),
               onChanged: (RangeValues values) {
                 setState(() {
                   _currentRangeValues = values;
@@ -95,9 +118,12 @@ class _FilterPanelState extends State<FilterPanel> {
               },
             ),
             const SizedBox(height: 16),
-            Text('Бренды',
-                style: textTheme.titleMedium
-                    ?.copyWith(color: colorScheme.onSecondaryContainer)),
+            Text(
+              'Бренды',
+              style: textTheme.titleMedium?.copyWith(
+                color: colorScheme.onSecondaryContainer,
+              ),
+            ),
             const SizedBox(height: 8),
             ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 150),
@@ -143,7 +169,8 @@ class _FilterPanelState extends State<FilterPanel> {
                 backgroundColor: colorScheme.primary,
                 foregroundColor: colorScheme.onPrimary,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
               child: const Text('Применить'),

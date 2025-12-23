@@ -13,7 +13,7 @@ class CatalogPage extends StatefulWidget {
   final ValueChanged<String>? onSearchChanged;
   final VoidCallback? onSearchSubmitted;
   final VoidCallback? onClearSearch;
-  
+
   final RangeValues priceRange;
   final int? selectedBrandId;
   final Function(RangeValues, int?)? onApplyFilters;
@@ -25,7 +25,7 @@ class CatalogPage extends StatefulWidget {
     this.onSearchChanged,
     this.onSearchSubmitted,
     this.onClearSearch,
-    this.priceRange = const RangeValues(0, 300),
+    this.priceRange = const RangeValues(0, 10000),
     this.selectedBrandId,
     this.onApplyFilters,
   });
@@ -34,7 +34,8 @@ class CatalogPage extends StatefulWidget {
   State<CatalogPage> createState() => _CatalogPageState();
 }
 
-class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStateMixin {
+class _CatalogPageState extends State<CatalogPage>
+    with SingleTickerProviderStateMixin {
   final Logger _logger = Logger(
     printer: PrettyPrinter(methodCount: 0, colors: true, printEmojis: true),
   );
@@ -43,11 +44,12 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
   bool _isFilterPanelVisible = false;
 
   final ProductService _productService = ProductService();
-  
-  List<Product> _allProducts = [];       
+
+  List<Product> _allProducts = [];
   List<Product> _filteredProducts = [];
   List<Brand> _brands = [];
   bool _isLoading = true;
+  double _maxPriceLimit = 1000;
 
   @override
   void initState() {
@@ -64,9 +66,8 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
   @override
   void didUpdateWidget(CatalogPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.priceRange != widget.priceRange || 
+    if (oldWidget.priceRange != widget.priceRange ||
         oldWidget.selectedBrandId != widget.selectedBrandId) {
-      _logger.d('Filters updated via props. Re-running filter.');
       _runFilter();
     }
   }
@@ -88,16 +89,30 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
       ]);
 
       if (mounted) {
+        final products = results[0] as List<Product>;
+
+        double maxFound = 0;
+        for (var p in products) {
+          for (var v in p.variants) {
+            if (v.price > maxFound) maxFound = v.price;
+          }
+        }
+
         setState(() {
-          _allProducts = results[0] as List<Product>;
+          _allProducts = products;
           _brands = results[1] as List<Brand>;
+          _maxPriceLimit = maxFound > 0 ? maxFound : 1000;
           _isLoading = false;
         });
-        _logger.i('Catalog: Data loaded. Total products: ${_allProducts.length}');
+        _logger.i('Catalog: Data loaded. Max price found: $_maxPriceLimit');
         _runFilter();
       }
     } catch (e, stackTrace) {
-      _logger.e('Catalog: Failed to load data', error: e, stackTrace: stackTrace);
+      _logger.e(
+        'Catalog: Failed to load data',
+        error: e,
+        stackTrace: stackTrace,
+      );
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -108,7 +123,6 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
   }
 
   void _onApplyFiltersLocal(RangeValues range, int? brandId) {
-    _logger.i('Catalog: Applying filters. Price: ${range.start}-${range.end}, BrandID: $brandId');
     widget.onApplyFilters?.call(range, brandId);
     _toggleFilterPanel();
   }
@@ -117,21 +131,24 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
     if (_allProducts.isEmpty) return;
 
     final queryLower = widget.searchController.text.toLowerCase().trim();
-    _logger.d('Catalog: Running filter logic for query: "$queryLower"');
 
     setState(() {
       _filteredProducts = _allProducts.where((product) {
         if (queryLower.isNotEmpty) {
           final nameMatches = product.name.toLowerCase().contains(queryLower);
-          final brandMatches = product.brand.name.toLowerCase().contains(queryLower);
+          final brandMatches = product.brand.name.toLowerCase().contains(
+            queryLower,
+          );
           if (!nameMatches && !brandMatches) return false;
         }
 
         if (product.variants.isNotEmpty) {
-          final price = product.variants.first.price;
-          if (price < widget.priceRange.start || price > widget.priceRange.end) {
-            return false;
-          }
+          bool hasValidPrice = product.variants.any(
+            (v) =>
+                v.price >= widget.priceRange.start &&
+                v.price <= widget.priceRange.end,
+          );
+          if (!hasValidPrice) return false;
         }
 
         if (widget.selectedBrandId != null) {
@@ -143,14 +160,11 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
         return true;
       }).toList();
     });
-    
-    _logger.d('Catalog: Filtering done. Items found: ${_filteredProducts.length}');
   }
 
   void _toggleFilterPanel() {
     setState(() {
       _isFilterPanelVisible = !_isFilterPanelVisible;
-      _logger.d('Catalog: Filter panel visibility = $_isFilterPanelVisible');
       if (_isFilterPanelVisible) {
         _animationController.forward();
       } else {
@@ -180,6 +194,7 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
                     brands: _brands,
                     initialBrandId: widget.selectedBrandId,
                     initialRange: widget.priceRange,
+                    maxLimit: _maxPriceLimit,
                     onApply: _onApplyFiltersLocal,
                   ),
                 ),
@@ -196,11 +211,11 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
             ],
           ),
         ),
-        
+
         Expanded(
           child: Padding(
             padding: const EdgeInsets.only(top: 30),
-            child: _isLoading 
+            child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : ProductGrid(
                     products: _filteredProducts,
