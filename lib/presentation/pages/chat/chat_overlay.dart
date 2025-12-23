@@ -19,25 +19,32 @@ class ChatOverlay extends StatelessWidget {
     final hasUnread = context.watch<ChatProvider>().hasUnreadMessages;
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
+    final bool isMobile = size.width < 650;
 
     const fabSize = 64.0;
-    final chatWidth = size.width > 800 ? 700.0 : size.width * 0.9;
-    final chatHeight = size.height > 600 ? 500.0 : size.height * 0.7;
+    
+    final double chatWidth = isMobile 
+        ? (isChatOpen ? size.width * 0.95 : fabSize)
+        : (isChatOpen ? (size.width > 800 ? 700.0 : size.width * 0.9) : fabSize);
+        
+    final double chatHeight = isMobile 
+        ? (isChatOpen ? size.height * 0.62 : fabSize)
+        : (isChatOpen ? (size.height > 600 ? 500.0 : size.height * 0.7) : fabSize);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 400),
       curve: Curves.easeInOutCubic,
-      width: isChatOpen ? chatWidth : fabSize,
-      height: isChatOpen ? chatHeight : fabSize,
+      width: chatWidth,
+      height: chatHeight,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(isChatOpen ? 16 : fabSize / 2),
+        borderRadius: BorderRadius.circular(isChatOpen ? 20 : fabSize / 2),
         color: isChatOpen
             ? theme.scaffoldBackgroundColor
             : theme.colorScheme.secondaryContainer,
         boxShadow: [
           BoxShadow(
             color: theme.shadowColor.withValues(alpha: 0.3),
-            blurRadius: 10,
+            blurRadius: 15,
             spreadRadius: 2,
           ),
         ],

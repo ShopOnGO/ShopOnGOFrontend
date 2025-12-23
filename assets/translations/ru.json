@@ -1,0 +1,145 @@
+{
+  "lang_code": "RU",
+  "tabs": {
+    "home": "Главная",
+    "catalog": "Каталог",
+    "profile": "Кабинет",
+    "login": "Войти",
+    "favorites": "Избранное",
+    "cart": "Корзина"
+  },
+  "search": {
+    "placeholder": "Поиск...",
+    "main_hint": "Искать товары...",
+    "catalog_hint": "Искать в каталоге...",
+    "liked_hint": "Искать в избранном..."
+  },
+  "filter": {
+    "price": "Цена",
+    "brands": "Бренды",
+    "loading_brands": "Загрузка брендов...",
+    "apply": "Применить"
+  },
+  "common": {
+    "currency": "BYN"
+  },
+  "catalog": {
+    "loading": "Загрузка данных...",
+    "empty": "Товары не найдены",
+    "no_variants": "Нет данных"
+  },
+  "product": {
+    "description_label": "Описание",
+    "no_description": "Описание отсутствует.",
+    "color_label": "Цвет: {}",
+    "quantity_label": "Количество",
+    "add_to_cart_btn": "Добавить в корзину",
+    "fav_added": "Добавлено в избранное!",
+    "fav_removed": "Удалено из избранного",
+    "cart_added_notify": "{} (x{}) добавлен в корзину!"
+  },
+  "cart": {
+    "empty": "Ваша корзина пуста",
+    "item_color": "Цвет: {}",
+    "item_price": "Цена: {} {}",
+    "total": "ИТОГ: {} {}",
+    "notes_hint": "Уточнения...",
+    "validation_error": "Пожалуйста, заполните это поле",
+    "order_success": "Заказ успешно оформлен",
+    "checkout_btn": "ЗАКАЗАТЬ"
+  },
+  "auth": {
+    "login_title": "Вход в аккаунт",
+    "register_title": "Регистрация",
+    "name_label": "Имя",
+    "email_label": "Email",
+    "password_label": "Пароль",
+    "btn_login": "ВОЙТИ",
+    "btn_register": "ЗАРЕГИСТРИРОВАТЬСЯ",
+    "or": "или",
+    "no_account": "Нет аккаунта? Зарегистрироваться",
+    "has_account": "Уже есть аккаунт? Войти",
+    "logout_title": "Выход из аккаунта",
+    "logout_confirm": "Вы уверены, что хотите выйти?",
+    "btn_cancel": "Отмена",
+    "btn_logout": "Выйти",
+    "err_name": "Пожалуйста, введите имя",
+    "err_email_empty": "Введите Email",
+    "err_email_invalid": "Некорректный формат Email",
+    "err_pass_empty": "Введите пароль",
+    "err_pass_short": "Минимум 6 символов"
+  },
+  "profile": {
+    "unauth_msg": "Войдите, чтобы увидеть ваш профиль",
+    "btn_go_login": "Войти в аккаунт",
+    "seller_panel": "Панель продавца",
+    "add_product": "Добавить новый товар",
+    "settings": "Настройки",
+    "help": "Помощь",
+    "faq": "Частые вопросы",
+    "balance_label": "Баллы",
+    "history_title": "История просмотра товаров",
+    "history_empty": "Вы еще не просматривали товары",
+    "edit_title": "Редактирование профиля",
+    "personal_info": "Личные данные",
+    "change_pass": "Смена пароля",
+    "old_pass": "Текущий пароль",
+    "new_pass": "Новый пароль",
+    "confirm_pass": "Повторите новый пароль",
+    "pass_changed": "Пароль успешно изменен",
+    "btn_save": "Сохранить",
+    "err_pass_mismatch": "Пароли не совпадают"
+  },
+  "add_product": {
+    "title": "Добавить новый товар",
+    "photo_placeholder": "Фото товара",
+    "name": "Название",
+    "brand": "Бренд",
+    "material": "Материал",
+    "sku": "Артикул (SKU)",
+    "price": "Цена ({})",
+    "stock": "Остаток (шт)",
+    "color": "Цвет",
+    "size": "Размер",
+    "dimensions": "Габариты упаковки",
+    "description": "Описание товара",
+    "btn_cancel": "Отмена",
+    "btn_create": "СОЗДАТЬ ТОВАР",
+    "loading_brands": "Загрузка брендов...",
+    "success": "Товар успешно добавлен!",
+    "err_no_image": "Выберите изображение товара",
+    "err_name": "Введите название",
+    "err_required": "Обязательно",
+    "err_price": "Укажите цену",
+    "err_stock": "Укажите кол-во",
+    "err_desc": "Введите описание",
+    "err_image_upload": "Не удалось загрузить изображение"
+  },
+  "chat": {
+    "title": "Чаты",
+    "support_name": "Поддержка Tailornado",
+    "no_messages": "Сообщений нет",
+    "hint": "Введите сообщение...",
+    "send_image_tooltip": "Отправить изображение",
+    "manager_mode": "Режим менеджера",
+    "refresh_list": "Обновить список",
+    "close_session": "Закрыть сессию",
+    "waiting_response": "ОЖИДАЮТ ОТВЕТА",
+    "no_active_requests": "Нет активных запросов",
+    "client_label": "Клиент #{}",
+    "select_user_hint": "Выберите пользователя слева",
+    "chat_with_user": "Чат с пользователем #{}",
+    "waiting_choice": "Ожидание выбора",
+    "media_preview": "Медиа",
+    "no_active_chats": "Нет активных чатов"
+  },
+  "faq": {
+    "title": "Частые вопросы",
+    "example_q": "Пример вопроса?",
+    "example_a": "Пример ответа."
+  },
+  "settings": {
+    "title": "Настройки",
+    "placeholder": "Пример страницы настроек."
+  }
+}

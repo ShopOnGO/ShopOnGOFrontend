@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../data/models/chat_conversation.dart';
 import '../../../../data/providers/chat_provider.dart';
 
@@ -20,7 +21,7 @@ class ChatListView extends StatelessWidget {
     final theme = Theme.of(context);
 
     if (conversations.isEmpty) {
-      return const Center(child: Text("Нет активных чатов", style: TextStyle(fontSize: 12)));
+      return Center(child: Text("chat.no_active_chats".tr(), style: const TextStyle(fontSize: 12)));
     }
 
     const double itemHeight = 70.0;
@@ -103,7 +104,9 @@ class ChatListView extends StatelessWidget {
                       maxLines: 1,
                     ),
                     Text(
-                      conversation.messages.isNotEmpty ? (conversation.messages.last.text ?? "Медиа") : "",
+                      conversation.messages.isNotEmpty 
+                        ? (conversation.messages.last.text ?? "chat.media_preview".tr()) 
+                        : "",
                       style: const TextStyle(fontSize: 11),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

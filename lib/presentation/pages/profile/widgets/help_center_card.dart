@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'profile_action_button.dart';
 
 class HelpCenterCard extends StatelessWidget {
@@ -17,10 +18,10 @@ class HelpCenterCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Помощь", style: textTheme.titleLarge),
+            Text("profile.help".tr(), style: textTheme.titleLarge),
             const SizedBox(height: 16),
             ProfileActionButton(
-              text: "Частые вопросы",
+              text: "profile.faq".tr(),
               onTap: onFaqTap,
             ),
           ],

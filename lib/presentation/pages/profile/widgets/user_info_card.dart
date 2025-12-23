@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../data/providers/auth_provider.dart';
 import '../../../../data/providers/chat_provider.dart';
 import 'profile_action_button.dart';
@@ -23,19 +24,19 @@ class UserInfoCard extends StatelessWidget {
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           elevation: 24.0,
-          title: const Text('Выход из аккаунта'),
-          content: const SingleChildScrollView(
+          title: Text('auth.logout_title'.tr()),
+          content: SingleChildScrollView(
             child: ListBody(
-              children: <Widget>[Text('Вы уверены, что хотите выйти?')],
+              children: <Widget>[Text('auth.logout_confirm'.tr())],
             ),
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Отмена'),
+              child: Text('auth.btn_cancel'.tr()),
               onPressed: () => Navigator.of(dialogContext).pop(),
             ),
             TextButton(
-              child: const Text('Выйти'),
+              child: Text('auth.btn_logout'.tr()),
               onPressed: () {
                 context.read<ChatProvider>().disconnect();
                 context.read<AuthProvider>().logout();
@@ -87,6 +88,8 @@ class UserInfoCard extends StatelessWidget {
     AuthProvider authProvider,
   ) {
     final user = authProvider.user!;
+    final bool isMobile = MediaQuery.of(context).size.width < 650;
+
     final buttonStyle = IconButton.styleFrom(
       backgroundColor: theme.colorScheme.surfaceContainerHighest,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -94,7 +97,7 @@ class UserInfoCard extends StatelessWidget {
         color: theme.colorScheme.outline.withValues(alpha: 0.5),
         width: 1.5,
       ),
-      fixedSize: const Size(44, 44),
+      fixedSize: isMobile ? const Size(40, 40) : const Size(44, 44),
     );
 
     return Column(
@@ -105,46 +108,55 @@ class UserInfoCard extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(12.0),
               child: Container(
-                width: 60,
-                height: 60,
+                width: isMobile ? 50 : 60,
+                height: isMobile ? 50 : 60,
                 color: theme.colorScheme.surfaceContainerHighest,
                 child: user.avatarUrl != null && user.avatarUrl!.isNotEmpty
                     ? Image.network(
                         user.avatarUrl!,
                         fit: BoxFit.cover,
                         errorBuilder: (c, e, s) =>
-                            const Icon(Icons.person_outline, size: 32),
+                            const Icon(Icons.person_outline, size: 28),
                       )
-                    : const Icon(Icons.person_outline, size: 32),
+                    : Icon(Icons.person_outline, size: isMobile ? 28 : 32),
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(user.name ?? 'Имя', style: textTheme.headlineSmall),
+                  Text(
+                    user.name ?? 'Имя', 
+                    style: isMobile ? textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold) : textTheme.headlineSmall,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   Text(
                     user.email,
                     style: textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.outline,
+                      fontSize: isMobile ? 12 : null,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.edit_outlined),
-              onPressed: () => _showEditProfileDialog(context),
-              style: buttonStyle,
-              tooltip: 'Редактировать профиль',
-            ),
             const SizedBox(width: 8),
             IconButton(
-              icon: const Icon(Icons.logout),
+              icon: Icon(Icons.edit_outlined, size: isMobile ? 18 : 20),
+              onPressed: () => _showEditProfileDialog(context),
+              style: buttonStyle,
+              tooltip: 'profile.edit_title'.tr(),
+            ),
+            const SizedBox(width: 4),
+            IconButton(
+              icon: Icon(Icons.logout, size: isMobile ? 18 : 20),
               onPressed: () => _showLogoutConfirmationDialog(context),
               style: buttonStyle,
-              tooltip: 'Выйти',
+              tooltip: 'auth.btn_logout'.tr(),
             ),
           ],
         ),
@@ -152,12 +164,15 @@ class UserInfoCard extends StatelessWidget {
         
         if (user.role == 'seller') ...[
           Text(
-            "Панель продавца",
-            style: textTheme.labelLarge?.copyWith(color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
+            "profile.seller_panel".tr(),
+            style: textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.primary, 
+              fontWeight: FontWeight.bold
+            ),
           ),
           const SizedBox(height: 8),
           ProfileActionButton(
-            text: "Добавить новый товар",
+            text: "profile.add_product".tr(),
             trailing: Icon(Icons.add_box_outlined, color: theme.colorScheme.primary),
             onTap: () => _showAddProductDialog(context),
           ),
@@ -165,7 +180,7 @@ class UserInfoCard extends StatelessWidget {
         ],
 
         ProfileActionButton(
-          text: "Настройки",
+          text: "profile.settings".tr(),
           onTap: onSettingsTap,
         ),
       ],
@@ -184,13 +199,14 @@ class UserInfoCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Войдите, чтобы увидеть ваш профиль',
+              'profile.unauth_msg'.tr(),
               style: textTheme.titleMedium,
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: onLoginRequested,
-              child: const Text('Войти в аккаунт'),
+              child: Text('profile.btn_go_login'.tr()),
             ),
           ],
         ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../data/providers/auth_provider.dart';
 
 class TopNavbar extends StatelessWidget {
@@ -33,13 +34,13 @@ class TopNavbar extends StatelessWidget {
     final Color iconAndTextColor = colorScheme.onSecondaryContainer;
 
     final items = [
-      {"icon": Icons.home, "label": "Главная"},
-      {"icon": Icons.list, "label": "Каталог"},
+      {"icon": Icons.home, "label": "tabs.home".tr()},
+      {"icon": Icons.list, "label": "tabs.catalog".tr()},
       authProvider.isAuthenticated
-          ? {"icon": Icons.person, "label": "Личный кабинет"}
-          : {"icon": Icons.login, "label": "Войти"},
-      {"icon": Icons.star, "label": "Избранное"},
-      {"icon": Icons.shopping_cart, "label": "Корзина"},
+          ? {"icon": Icons.person, "label": "tabs.profile".tr()}
+          : {"icon": Icons.login, "label": "tabs.login".tr()},
+      {"icon": Icons.star, "label": "tabs.favorites".tr()},
+      {"icon": Icons.shopping_cart, "label": "tabs.cart".tr()},
     ];
 
     return LayoutBuilder(
@@ -47,7 +48,7 @@ class TopNavbar extends StatelessWidget {
         final double availableWidth = constraints.maxWidth - margin.horizontal;
         double baseItemWidth = availableWidth / items.length;
 
-        final double minContentWidth = 30;
+        const double minContentWidth = 30;
         final double maxContentWidth = baseItemWidth;
 
         double calculatedItemWidth;
@@ -71,6 +72,7 @@ class TopNavbar extends StatelessWidget {
             items.length * calculatedItemWidth -
             (items.length - 1) * calculatedOverlap;
         totalNavbarWidth = totalNavbarWidth.clamp(0, availableWidth);
+        
         return Padding(
           padding: margin,
           child: SizedBox(
@@ -142,15 +144,6 @@ class TopNavbar extends StatelessWidget {
             color: backgroundColor,
             borderRadius: BorderRadius.circular(borderRadius),
             border: Border.all(color: borderColor, width: borderWidth),
-            /*boxShadow: active
-                ? [
-                    BoxShadow(
-                      color: theme.shadowColor,
-                      blurRadius: 6,
-                      offset: const Offset(0, 3),
-                    ),
-                  ]
-                : [],*/
           ),
           child: FittedBox(
             fit: BoxFit.scaleDown,

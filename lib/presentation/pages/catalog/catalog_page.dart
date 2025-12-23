@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/brand.dart';
 import '../../../data/services/product_service.dart';
@@ -13,7 +14,7 @@ class CatalogPage extends StatefulWidget {
   final ValueChanged<String>? onSearchChanged;
   final VoidCallback? onSearchSubmitted;
   final VoidCallback? onClearSearch;
-
+  
   final RangeValues priceRange;
   final int? selectedBrandId;
   final Function(RangeValues, int?)? onApplyFilters;
@@ -25,7 +26,7 @@ class CatalogPage extends StatefulWidget {
     this.onSearchChanged,
     this.onSearchSubmitted,
     this.onClearSearch,
-    this.priceRange = const RangeValues(0, 10000),
+    this.priceRange = const RangeValues(0, 10000), 
     this.selectedBrandId,
     this.onApplyFilters,
   });
@@ -34,8 +35,7 @@ class CatalogPage extends StatefulWidget {
   State<CatalogPage> createState() => _CatalogPageState();
 }
 
-class _CatalogPageState extends State<CatalogPage>
-    with SingleTickerProviderStateMixin {
+class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStateMixin {
   final Logger _logger = Logger(
     printer: PrettyPrinter(methodCount: 0, colors: true, printEmojis: true),
   );
@@ -44,8 +44,8 @@ class _CatalogPageState extends State<CatalogPage>
   bool _isFilterPanelVisible = false;
 
   final ProductService _productService = ProductService();
-
-  List<Product> _allProducts = [];
+  
+  List<Product> _allProducts = [];       
   List<Product> _filteredProducts = [];
   List<Brand> _brands = [];
   bool _isLoading = true;
@@ -66,7 +66,7 @@ class _CatalogPageState extends State<CatalogPage>
   @override
   void didUpdateWidget(CatalogPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.priceRange != widget.priceRange ||
+    if (oldWidget.priceRange != widget.priceRange || 
         oldWidget.selectedBrandId != widget.selectedBrandId) {
       _runFilter();
     }
@@ -80,7 +80,7 @@ class _CatalogPageState extends State<CatalogPage>
   }
 
   Future<void> _loadData() async {
-    _logger.i('Catalog: Loading initial products and brands...');
+    _logger.i('Catalog: Loading data...');
     setState(() => _isLoading = true);
     try {
       final results = await Future.wait([
@@ -90,7 +90,7 @@ class _CatalogPageState extends State<CatalogPage>
 
       if (mounted) {
         final products = results[0] as List<Product>;
-
+        
         double maxFound = 0;
         for (var p in products) {
           for (var v in p.variants) {
@@ -104,15 +104,11 @@ class _CatalogPageState extends State<CatalogPage>
           _maxPriceLimit = maxFound > 0 ? maxFound : 1000;
           _isLoading = false;
         });
-        _logger.i('Catalog: Data loaded. Max price found: $_maxPriceLimit');
+        _logger.i('Catalog: Data loaded. Max price limit set to: $_maxPriceLimit');
         _runFilter();
       }
     } catch (e, stackTrace) {
-      _logger.e(
-        'Catalog: Failed to load data',
-        error: e,
-        stackTrace: stackTrace,
-      );
+      _logger.e('Catalog: Failed to load data', error: e, stackTrace: stackTrace);
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -124,85 +120,104 @@ class _CatalogPageState extends State<CatalogPage>
 
   void _onApplyFiltersLocal(RangeValues range, int? brandId) {
     widget.onApplyFilters?.call(range, brandId);
-    _toggleFilterPanel();
+    if (MediaQuery.of(context).size.width < 650) {
+      Navigator.pop(context);
+    } else {
+      _toggleFilterPanel();
+    }
   }
 
   void _runFilter() {
     if (_allProducts.isEmpty) return;
-
     final queryLower = widget.searchController.text.toLowerCase().trim();
 
     setState(() {
       _filteredProducts = _allProducts.where((product) {
         if (queryLower.isNotEmpty) {
           final nameMatches = product.name.toLowerCase().contains(queryLower);
-          final brandMatches = product.brand.name.toLowerCase().contains(
-            queryLower,
-          );
+          final brandMatches = product.brand.name.toLowerCase().contains(queryLower);
           if (!nameMatches && !brandMatches) return false;
         }
-
         if (product.variants.isNotEmpty) {
-          bool hasValidPrice = product.variants.any(
-            (v) =>
-                v.price >= widget.priceRange.start &&
-                v.price <= widget.priceRange.end,
+          bool anyVariantInPriceRange = product.variants.any((v) => 
+            v.price >= widget.priceRange.start && v.price <= widget.priceRange.end
           );
-          if (!hasValidPrice) return false;
+          if (!anyVariantInPriceRange) return false;
         }
-
         if (widget.selectedBrandId != null) {
-          if (product.brand.id != widget.selectedBrandId) {
-            return false;
-          }
+          if (product.brand.id != widget.selectedBrandId) return false;
         }
-
         return true;
       }).toList();
     });
   }
 
   void _toggleFilterPanel() {
-    setState(() {
-      _isFilterPanelVisible = !_isFilterPanelVisible;
-      if (_isFilterPanelVisible) {
-        _animationController.forward();
-      } else {
-        _animationController.reverse();
-      }
-    });
+    final bool isMobile = MediaQuery.of(context).size.width < 650;
+
+    if (isMobile) {
+      _logger.i('Catalog: Opening mobile filter sheet');
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+        ),
+        builder: (context) => FilterPanel(
+          brands: _brands,
+          initialBrandId: widget.selectedBrandId,
+          initialRange: widget.priceRange,
+          maxLimit: _maxPriceLimit,
+          onApply: _onApplyFiltersLocal,
+          isMobile: true,
+        ),
+      );
+    } else {
+      setState(() {
+        _isFilterPanelVisible = !_isFilterPanelVisible;
+        if (_isFilterPanelVisible) {
+          _animationController.forward();
+        } else {
+          _animationController.reverse();
+        }
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final bool isMobile = MediaQuery.of(context).size.width < 650;
     const double searchBarHeight = 50.0;
+    final double horizontalPadding = isMobile ? 16.0 : 45.0;
 
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(45, 5, 45, 0),
+          padding: EdgeInsets.fromLTRB(horizontalPadding, 5, horizontalPadding, 0),
           child: Stack(
             children: [
-              Padding(
-                padding: const EdgeInsets.only(top: searchBarHeight / 2),
-                child: SizeTransition(
-                  sizeFactor: CurvedAnimation(
-                    parent: _animationController,
-                    curve: Curves.fastOutSlowIn,
-                  ),
-                  child: FilterPanel(
-                    brands: _brands,
-                    initialBrandId: widget.selectedBrandId,
-                    initialRange: widget.priceRange,
-                    maxLimit: _maxPriceLimit,
-                    onApply: _onApplyFiltersLocal,
+              if (!isMobile)
+                Padding(
+                  padding: const EdgeInsets.only(top: searchBarHeight / 2),
+                  child: SizeTransition(
+                    sizeFactor: CurvedAnimation(
+                      parent: _animationController,
+                      curve: Curves.fastOutSlowIn,
+                    ),
+                    child: FilterPanel(
+                      brands: _brands,
+                      initialBrandId: widget.selectedBrandId,
+                      initialRange: widget.priceRange,
+                      maxLimit: _maxPriceLimit,
+                      onApply: _onApplyFiltersLocal,
+                    ),
                   ),
                 ),
-              ),
 
               CustomSearchBar(
                 controller: widget.searchController,
-                hintText: "Искать в каталоге...",
+                hintText: "search.catalog_hint".tr(),
                 onSearchChanged: null,
                 onSearchSubmitted: widget.onSearchSubmitted,
                 onClear: widget.onClearSearch,
@@ -211,16 +226,17 @@ class _CatalogPageState extends State<CatalogPage>
             ],
           ),
         ),
-
+        
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.only(top: 30),
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+            padding: EdgeInsets.only(top: isMobile ? 15 : 30),
+            child: _isLoading 
+                ? Center(child: Text('catalog.loading'.tr()))
                 : ProductGrid(
                     products: _filteredProducts,
-                    maxCrossAxisExtent: 280,
+                    maxCrossAxisExtent: isMobile ? 350 : 280,
                     onProductSelected: widget.onProductSelected,
+                    padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 20),
                   ),
           ),
         ),

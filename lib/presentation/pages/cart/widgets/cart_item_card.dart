@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../data/models/cart_item.dart';
 import '../../../../data/models/product.dart';
 import '../../../../data/providers/cart_provider.dart';
@@ -64,14 +65,17 @@ class CartItemCard extends StatelessWidget {
                     Text(product.name, style: textTheme.titleMedium),
                     const SizedBox(height: 2),
                     Text(
-                      'Цвет: ${variant.colors}',
+                      'cart.item_color'.tr(args: [variant.colors]),
                       style: textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.outline,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Цена: ${variant.price.toStringAsFixed(0)} BYN',
+                      'cart.item_price'.tr(args: [
+                        variant.price.toStringAsFixed(0),
+                        'common.currency'.tr()
+                      ]),
                       style: textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 8),

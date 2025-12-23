@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../data/models/cart_item.dart';
 import '../../../data/models/product.dart';
 import '../../../data/providers/cart_provider.dart';
@@ -91,7 +92,7 @@ class CartPage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 48.0),
               child: Center(
                 child: Text(
-                  'Ваша корзина пуста',
+                  'cart.empty'.tr(),
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: theme.colorScheme.onSecondaryContainer,
                   ),

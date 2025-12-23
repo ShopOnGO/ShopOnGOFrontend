@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../data/models/product.dart';
 import '../../data/providers/liked_provider.dart';
 
@@ -23,16 +24,22 @@ class _ProductCardState extends State<ProductCard> {
   Color _getColorFromString(String colorName) {
     switch (colorName.toLowerCase()) {
       case 'черный':
+      case 'black':
         return Colors.black;
       case 'белый':
+      case 'white':
         return const Color(0xFFF5F5F5);
       case 'синий':
+      case 'blue':
         return Colors.blue;
       case 'красный':
+      case 'red':
         return Colors.red;
       case 'зеленый':
+      case 'green':
         return Colors.green;
       case 'серый':
+      case 'grey':
         return Colors.grey;
       default:
         return Colors.black;
@@ -117,7 +124,7 @@ class _ProductCardState extends State<ProductCard> {
 
     if (widget.product.variants.isEmpty) {
       return Card(
-        child: Center(child: Text('Нет данных', style: textTheme.bodySmall)),
+        child: Center(child: Text('catalog.no_variants'.tr(), style: textTheme.bodySmall)),
       );
     }
     
@@ -182,7 +189,7 @@ class _ProductCardState extends State<ProductCard> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
-                        '${selectedVariant.price.toStringAsFixed(0)} BYN',
+                        '${selectedVariant.price.toStringAsFixed(0)} ${"common.currency".tr()}',
                         style: textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),

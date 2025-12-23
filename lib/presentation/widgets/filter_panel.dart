@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../data/models/brand.dart';
 
 class FilterPanel extends StatefulWidget {
@@ -7,6 +8,7 @@ class FilterPanel extends StatefulWidget {
   final int? initialBrandId;
   final RangeValues? initialRange;
   final double maxLimit;
+  final bool isMobile; 
 
   const FilterPanel({
     super.key,
@@ -15,6 +17,7 @@ class FilterPanel extends StatefulWidget {
     this.initialBrandId,
     this.initialRange,
     this.maxLimit = 1000,
+    this.isMobile = false,
   });
 
   @override
@@ -65,7 +68,7 @@ class _FilterPanelState extends State<FilterPanel> {
     final double effectiveMax = widget.maxLimit > 0 ? widget.maxLimit : 100;
 
     return Container(
-      decoration: BoxDecoration(
+      decoration: widget.isMobile ? null : BoxDecoration(
         color: colorScheme.secondaryContainer,
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(22)),
         boxShadow: [
@@ -77,17 +80,31 @@ class _FilterPanelState extends State<FilterPanel> {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: 12),
+            if (!widget.isMobile) const SizedBox(height: 25),
+
+            if (widget.isMobile) ...[
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: colorScheme.onSecondaryContainer.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+            ],
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Цена',
+                  'filter.price'.tr(),
                   style: textTheme.titleMedium?.copyWith(
                     color: colorScheme.onSecondaryContainer,
                   ),
@@ -105,7 +122,7 @@ class _FilterPanelState extends State<FilterPanel> {
               values: _currentRangeValues,
               min: 0,
               max: effectiveMax,
-              divisions: effectiveMax > 1000 ? 100 : effectiveMax.round(),
+              divisions: effectiveMax > 1000 ? 100 : effectiveMax.round().clamp(1, 1000),
               activeColor: colorScheme.primary,
               labels: RangeLabels(
                 '${_currentRangeValues.start.round()}',
@@ -119,19 +136,22 @@ class _FilterPanelState extends State<FilterPanel> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Бренды',
+              'filter.brands'.tr(),
               style: textTheme.titleMedium?.copyWith(
                 color: colorScheme.onSecondaryContainer,
               ),
             ),
             const SizedBox(height: 8),
             ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 150),
+              constraints: BoxConstraints(maxHeight: widget.isMobile ? 300 : 150),
               child: widget.brands.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text('Загрузка брендов...'),
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          'filter.loading_brands'.tr(),
+                          style: TextStyle(color: colorScheme.onSecondaryContainer),
+                        ),
                       ),
                     )
                   : SingleChildScrollView(
@@ -171,9 +191,9 @@ class _FilterPanelState extends State<FilterPanel> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 18),
               ),
-              child: const Text('Применить'),
+              child: Text('filter.apply'.tr(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             ),
           ],
         ),
