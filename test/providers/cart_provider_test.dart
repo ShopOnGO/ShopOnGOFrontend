@@ -4,15 +4,26 @@ import 'package:tailornado/data/models/product.dart';
 import 'package:tailornado/data/models/product_variant.dart';
 import 'package:tailornado/data/models/brand.dart';
 import 'package:tailornado/data/models/category.dart';
+import 'package:tailornado/data/services/cart_service.dart';
+
+class FakeCartService extends Fake implements CartService {
+  @override
+  Future<bool> addCartItem(int v, int q, String t) async => true;
+  @override
+  Future<bool> updateCartItem(int v, int q, String t) async => true;
+  @override
+  Future<bool> deleteCartItem(int v, String t) async => true;
+}
 
 void main() {
   group('CartProvider Tests', () {
     late CartProvider cartProvider;
     late Product mockProduct;
     late ProductVariant mockVariant;
+    const String dummyToken = "test_token";
 
     setUp(() {
-      cartProvider = CartProvider();
+      cartProvider = CartProvider(cartService: FakeCartService());
 
       mockVariant = ProductVariant(
         id: 1,
@@ -56,28 +67,25 @@ void main() {
       );
     });
 
-    test('Добавление товара в корзину увеличивает счетчик', () {
-      cartProvider.addToCart(mockProduct, mockVariant);
+    test('Добавление товара в корзину увеличивает счетчик', () async {
+      await cartProvider.addToCart(mockProduct, mockVariant, dummyToken);
       expect(cartProvider.itemCount, 1);
       expect(cartProvider.totalAmount, 100.0);
     });
 
-    test(
-      'Повторное добавление того же товара увеличивает количество (quantity)',
-      () {
-        cartProvider.addToCart(mockProduct, mockVariant);
-        cartProvider.addToCart(mockProduct, mockVariant);
+    test('Повторное добавление увеличивает количество', () async {
+      await cartProvider.addToCart(mockProduct, mockVariant, dummyToken);
+      await cartProvider.addToCart(mockProduct, mockVariant, dummyToken);
 
-        expect(cartProvider.itemCount, 1);
-        expect(cartProvider.cartItems[0].quantity, 2);
-        expect(cartProvider.totalAmount, 200.0);
-      },
-    );
+      expect(cartProvider.itemCount, 1);
+      expect(cartProvider.cartItems[0].quantity, 2);
+      expect(cartProvider.totalAmount, 200.0);
+    });
 
-    test('Удаление товара полностью очищает его из корзины', () {
-      cartProvider.addToCart(mockProduct, mockVariant);
+    test('Удаление товара полностью очищает его из корзины', () async {
+      await cartProvider.addToCart(mockProduct, mockVariant, dummyToken);
       final cartId = '${mockProduct.id}_${mockVariant.id}';
-      cartProvider.removeFromCart(cartId);
+      await cartProvider.removeFromCart(cartId, dummyToken);
       expect(cartProvider.itemCount, 0);
     });
   });

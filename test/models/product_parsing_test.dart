@@ -7,9 +7,12 @@ void main() {
       final json = {
         "id": 1,
         "name": "Test",
+        "description": "Desc",
         "deletedAt": {"valid": true, "time": "2025-10-10T10:00:00Z"},
         "variants": [],
         "imageURLs": [],
+        "videoURLs": [],
+        "is_active": true,
       };
 
       final product = Product.fromJson(json);
@@ -23,6 +26,8 @@ void main() {
         "name": "Test",
         "deletedAt": {"valid": false, "time": ""},
         "variants": [],
+        "imageURLs": [],
+        "videoURLs": [],
       };
 
       final product = Product.fromJson(json);

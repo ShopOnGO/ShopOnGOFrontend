@@ -18,6 +18,7 @@ import '../core/utils/app_logger.dart';
 import '../data/providers/auth_provider.dart';
 import '../data/providers/liked_provider.dart';
 import '../data/providers/product_provider.dart';
+import '../data/providers/cart_provider.dart';
 
 class DashboardPage extends StatefulWidget {
   final VoidCallback toggleTheme;
@@ -59,15 +60,24 @@ class _DashboardPageState extends State<DashboardPage> {
   void _handleAuthSync() {
     final authProvider = context.read<AuthProvider>();
     final likedProvider = context.read<LikedProvider>();
+    final cartProvider = context.read<CartProvider>();
 
     if (authProvider.isAuthenticated && authProvider.token != _lastToken) {
       _lastToken = authProvider.token;
-      logger.i('Dashboard: User logged in, syncing favorites...');
-      Future.microtask(() => likedProvider.loadRemoteFavorites(_lastToken!));
+      logger.i('Dashboard: User logged in, syncing favorites and cart...');
+
+      Future.microtask(() {
+        likedProvider.loadRemoteFavorites(_lastToken!);
+        cartProvider.loadRemoteCart(_lastToken!);
+      });
     } else if (!authProvider.isAuthenticated && _lastToken != null) {
       _lastToken = null;
-      logger.w('Dashboard: User logout, clearing local favorites');
-      Future.microtask(() => likedProvider.clearLiked());
+      logger.w('Dashboard: User logout, clearing local state');
+
+      Future.microtask(() {
+        likedProvider.clearLiked();
+        cartProvider.clearLocalData();
+      });
     }
   }
 
@@ -249,7 +259,8 @@ class _DashboardPageState extends State<DashboardPage> {
               ProfilePage(
                 onProductSelected: _selectProduct,
                 onLoginRequested: _showLoginDialog,
-                onSettingsRequested: () => _showProfileOverlay(ProfileOverlay.settings),
+                onSettingsRequested: () =>
+                    _showProfileOverlay(ProfileOverlay.settings),
                 onFaqRequested: () => _showProfileOverlay(ProfileOverlay.faq),
               ),
               LikedPage(onProductSelected: _selectProduct),
@@ -288,9 +299,15 @@ class _DashboardPageState extends State<DashboardPage> {
             right: isMobile ? (_isChatOpen ? 12.0 : 24.0) : 24.0,
             bottom: isMobile ? 115.0 : 24.0,
             child: IgnorePointer(
-              ignoring: _selectedProduct != null || _activeProfileOverlay != ProfileOverlay.none,
+              ignoring:
+                  _selectedProduct != null ||
+                  _activeProfileOverlay != ProfileOverlay.none,
               child: AnimatedOpacity(
-                opacity: (_selectedProduct != null || _activeProfileOverlay != ProfileOverlay.none) ? 0.0 : 1.0,
+                opacity:
+                    (_selectedProduct != null ||
+                        _activeProfileOverlay != ProfileOverlay.none)
+                    ? 0.0
+                    : 1.0,
                 duration: const Duration(milliseconds: 300),
                 child: ChatOverlay(
                   isChatOpen: _isChatOpen,

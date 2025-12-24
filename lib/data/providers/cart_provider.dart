@@ -3,86 +3,169 @@ import '../../core/utils/app_logger.dart';
 import '../models/cart_item.dart';
 import '../models/product.dart';
 import '../models/product_variant.dart';
+import '../services/cart_service.dart';
+import '../services/product_service.dart';
 
 class CartProvider with ChangeNotifier {
+  final CartService _cartService;
+  final ProductService _prodService;
+
+  CartProvider({CartService? cartService, ProductService? prodService})
+    : _cartService = cartService ?? CartService(),
+      _prodService = prodService ?? ProductService();
+
   final Map<String, CartItem> _items = {};
+  bool _isLoading = false;
 
   List<CartItem> get cartItems => _items.values.toList();
   int get itemCount => _items.length;
+  bool get isLoading => _isLoading;
 
-  void addToCart(Product product, ProductVariant variant, {int quantity = 1}) {
-    final cartId = '${product.id}_${variant.id}';
-    logger.i('Cart: Adding item - Product: ${product.name}, Variant: ${variant.id}, Qty: $quantity');
-
-    if (_items.containsKey(cartId)) {
-      _items.update(
-        cartId,
-        (existingCartItem) => CartItem(
-          id: existingCartItem.id,
-          product: existingCartItem.product,
-          selectedVariant: existingCartItem.selectedVariant,
-          quantity: existingCartItem.quantity + quantity,
-        ),
-      );
-    } else {
-      _items.putIfAbsent(
-        cartId,
-        () => CartItem(
-          id: cartId,
-          product: product,
-          selectedVariant: variant,
-          quantity: quantity,
-        ),
-      );
-    }
+  Future<void> loadRemoteCart(String token) async {
+    if (_isLoading) return;
+    _isLoading = true;
     notifyListeners();
-  }
 
-  void incrementQuantity(String cartId) {
-    if (_items.containsKey(cartId)) {
-      _items.update(
-        cartId,
-        (item) => CartItem(
-          id: item.id,
-          product: item.product,
-          selectedVariant: item.selectedVariant,
-          quantity: item.quantity + 1,
-        ),
-      );
-      logger.d('Cart: Incremented quantity for $cartId. New Qty: ${_items[cartId]?.quantity}');
+    try {
+      final data = await _cartService.getCart(token);
+      _items.clear();
+
+      if (data != null && data['CartItems'] != null) {
+        final List<dynamic> remoteItems = data['CartItems'];
+
+        for (var itemJson in remoteItems) {
+          final int variantId = itemJson['ProductVariantID'];
+          final int quantity = itemJson['Quantity'];
+          final int productId = itemJson['ProductVariant']['ProductID'];
+
+          final product = await _prodService.fetchProductById(productId);
+          if (product != null) {
+            final variant = product.variants.firstWhere(
+              (v) => v.id == variantId,
+              orElse: () => product.variants.first,
+            );
+
+            final cartId = '${productId}_$variantId';
+            _items[cartId] = CartItem(
+              id: cartId,
+              product: product,
+              selectedVariant: variant,
+              quantity: quantity,
+            );
+          }
+        }
+      }
+    } catch (e) {
+      logger.e('CartProvider: Sync error', error: e);
+    } finally {
+      _isLoading = false;
       notifyListeners();
     }
   }
 
-  void decrementQuantity(String cartId) {
-    if (!_items.containsKey(cartId)) return;
+  Future<void> addToCart(
+    Product product,
+    ProductVariant variant,
+    String token, {
+    int quantity = 1,
+  }) async {
+    final cartId = '${product.id}_${variant.id}';
 
-    if (_items[cartId]!.quantity > 1) {
+    if (_items.containsKey(cartId)) {
       _items.update(
         cartId,
-        (item) => CartItem(
-          id: item.id,
-          product: item.product,
-          selectedVariant: item.selectedVariant,
-          quantity: item.quantity - 1,
+        (existing) => CartItem(
+          id: existing.id,
+          product: existing.product,
+          selectedVariant: existing.selectedVariant,
+          quantity: existing.quantity + quantity,
         ),
       );
-      logger.d('Cart: Decremented quantity for $cartId. New Qty: ${_items[cartId]?.quantity}');
     } else {
-      logger.i('Cart: Removing item via decrement: $cartId');
-      _items.remove(cartId);
+      _items[cartId] = CartItem(
+        id: cartId,
+        product: product,
+        selectedVariant: variant,
+        quantity: quantity,
+      );
     }
     notifyListeners();
+
+    try {
+      final success = await _cartService.addCartItem(
+        variant.id,
+        quantity,
+        token,
+      );
+      if (!success) throw Exception('Failed to add to remote cart');
+    } catch (e) {
+      loadRemoteCart(token);
+      rethrow;
+    }
   }
 
-  void removeFromCart(String cartId) {
-    logger.i('Cart: Removing item: $cartId');
+  Future<void> incrementQuantity(String cartId, String token) async {
+    final item = _items[cartId];
+    if (item == null) return;
+
+    final newQty = item.quantity + 1;
+    item.quantity = newQty;
+    notifyListeners();
+
+    try {
+      await _cartService.updateCartItem(item.selectedVariant.id, newQty, token);
+    } catch (e) {
+      loadRemoteCart(token);
+    }
+  }
+
+  Future<void> decrementQuantity(String cartId, String token) async {
+    final item = _items[cartId];
+    if (item == null) return;
+
+    if (item.quantity > 1) {
+      final newQty = item.quantity - 1;
+      item.quantity = newQty;
+      notifyListeners();
+      try {
+        await _cartService.updateCartItem(
+          item.selectedVariant.id,
+          newQty,
+          token,
+        );
+      } catch (e) {
+        loadRemoteCart(token);
+      }
+    } else {
+      removeFromCart(cartId, token);
+    }
+  }
+
+  Future<void> removeFromCart(String cartId, String token) async {
+    final item = _items[cartId];
+    if (item == null) return;
+
     _items.remove(cartId);
     notifyListeners();
+
+    try {
+      await _cartService.deleteCartItem(item.selectedVariant.id, token);
+    } catch (e) {
+      loadRemoteCart(token);
+    }
   }
 
-  void clearCart() {
-    logger.i('Cart: Clearing entire cart');
+  Future<void> clearCart(String token) async {
+    _items.clear();
+    notifyListeners();
+    try {
+      await _cartService.deleteCart(token);
+    } catch (e) {
+      loadRemoteCart(token);
+    }
+  }
+
+  void clearLocalData() {
     _items.clear();
     notifyListeners();
   }

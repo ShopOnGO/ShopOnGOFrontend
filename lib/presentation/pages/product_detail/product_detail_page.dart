@@ -257,11 +257,24 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   }
 
   void _addToCart(ProductVariant selectedVariant) {
+    final auth = context.read<AuthProvider>();
+
+    if (!auth.isAuthenticated) {
+      NotificationHelper.show(
+        context,
+        message: 'cart.err_no_auth'.tr(),
+        isError: true,
+      );
+      return;
+    }
+
     context.read<CartProvider>().addToCart(
       widget.product,
       selectedVariant,
+      auth.token!,
       quantity: _quantity,
     );
+
     NotificationHelper.show(
       context,
       message: 'product.cart_added_notify'.tr(

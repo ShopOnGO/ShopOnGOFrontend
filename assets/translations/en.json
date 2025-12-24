@@ -47,7 +47,14 @@
     "notes_hint": "Notes...",
     "validation_error": "Please fill this field",
     "order_success": "Order placed successfully",
-    "checkout_btn": "CHECKOUT"
+    "checkout_btn": "CHECKOUT",
+    "err_no_auth": "Please login to use the cart",
+    "err_load": "Failed to load cart",
+    "err_add": "Failed to add item",
+    "err_update": "Failed to update quantity",
+    "err_delete": "Failed to remove item",
+    "clear_all": "Clear All",
+    "clear_confirm": "Are you sure you want to remove all items from the cart?"
   },
   "auth": {
     "login_title": "Login",

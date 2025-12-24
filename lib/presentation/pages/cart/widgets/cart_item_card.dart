@@ -24,14 +24,13 @@ class CartItemCard extends StatelessWidget {
     final textTheme = theme.textTheme;
     final cartProvider = context.read<CartProvider>();
     final auth = context.watch<AuthProvider>();
+    final likedProvider = context.watch<LikedProvider>();
 
     final product = cartItem.product;
     final variant = cartItem.selectedVariant;
     final imageUrl = variant.imageURLs.isNotEmpty
         ? variant.imageURLs.first
         : null;
-
-    final likedProvider = context.watch<LikedProvider>();
 
     final isLiked = likedProvider.isInLiked(variant.id);
 
@@ -66,7 +65,12 @@ class CartItemCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(product.name, style: textTheme.titleMedium),
+                    Text(
+                      product.name,
+                      style: textTheme.titleMedium,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     const SizedBox(height: 2),
                     Text(
                       'cart.item_color'.tr(args: [variant.colors]),
@@ -128,7 +132,7 @@ class CartItemCard extends StatelessWidget {
                               if (context.mounted) {
                                 NotificationHelper.show(
                                   context,
-                                  message: 'Ошибка'.tr(),
+                                  message: 'common.error_occurred'.tr(),
                                   isError: true,
                                 );
                               }
@@ -147,8 +151,14 @@ class CartItemCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 16),
                         IconButton(
-                          onPressed: () =>
-                              cartProvider.removeFromCart(cartItem.id),
+                          onPressed: () {
+                            if (auth.isAuthenticated) {
+                              cartProvider.removeFromCart(
+                                cartItem.id,
+                                auth.token!,
+                              );
+                            }
+                          },
                           icon: const Icon(Icons.delete_outline),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
@@ -167,14 +177,26 @@ class CartItemCard extends StatelessWidget {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.remove),
-                      onPressed: () =>
-                          cartProvider.decrementQuantity(cartItem.id),
+                      onPressed: () {
+                        if (auth.isAuthenticated) {
+                          cartProvider.decrementQuantity(
+                            cartItem.id,
+                            auth.token!,
+                          );
+                        }
+                      },
                     ),
                     Text('${cartItem.quantity}', style: textTheme.titleMedium),
                     IconButton(
                       icon: const Icon(Icons.add),
-                      onPressed: () =>
-                          cartProvider.incrementQuantity(cartItem.id),
+                      onPressed: () {
+                        if (auth.isAuthenticated) {
+                          cartProvider.incrementQuantity(
+                            cartItem.id,
+                            auth.token!,
+                          );
+                        }
+                      },
                     ),
                   ],
                 ),
