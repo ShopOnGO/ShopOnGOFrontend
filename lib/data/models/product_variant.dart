@@ -6,7 +6,6 @@ class ProductVariant {
   final String colors;
   final int stock;
   final List<String> imageURLs;
-
   final String barcode;
   final String dimensions;
   final double discount;
@@ -16,7 +15,6 @@ class ProductVariant {
   final int reviewCount;
   final int reservedStock;
   final String material;
-
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? deletedAt;
@@ -44,41 +42,38 @@ class ProductVariant {
   });
 
   factory ProductVariant.fromJson(Map<String, dynamic> json) {
-    var imageList = json['imageURLs'] as List? ?? [];
-    List<String> images = imageList.map((i) => i.toString()).toList();
+    var rawImages =
+        json['images'] ?? json['imageURLs'] ?? json['ImageURLs'] ?? [];
+    List<String> images = (rawImages as List).map((i) => i.toString()).toList();
 
-    DateTime createdAt = DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now();
-    DateTime updatedAt = DateTime.tryParse(json['updatedAt'] ?? '') ?? DateTime.now();
-
-    DateTime? deletedAt;
-    if (json['deletedAt'] != null && json['deletedAt'] is Map) {
-       if (json['deletedAt']['valid'] == true) {
-         deletedAt = DateTime.tryParse(json['deletedAt']['time'] ?? '');
-       }
-    } else if (json['deletedAt'] != null && json['deletedAt'] is String) {
-       deletedAt = DateTime.tryParse(json['deletedAt']);
+    double parseDouble(dynamic v) {
+      if (v is num) return v.toDouble();
+      return double.tryParse(v?.toString() ?? '0') ?? 0.0;
     }
 
     return ProductVariant(
-      id: json['id'] ?? 0,
-      sku: json['sku'] ?? '',
-      price: (json['price'] ?? 0).toDouble(),
-      sizes: json['sizes'] ?? '',
-      colors: json['colors'] ?? '',
-      stock: json['stock'] ?? 0,
+      id: json['ID'] ?? json['id'] ?? 0,
+      sku: json['SKU'] ?? json['sku'] ?? '',
+      price: parseDouble(json['Price'] ?? json['price']),
+      sizes: json['sizes']?.toString() ?? '',
+      colors: json['colors']?.toString() ?? 'Стандарт',
+      stock: json['Stock'] ?? json['stock'] ?? 0,
       imageURLs: images,
-      barcode: json['barcode'] ?? '',
-      dimensions: json['dimensions'] ?? '',
-      discount: (json['discount'] ?? 0).toDouble(),
-      isActive: json['isActive'] ?? true,
-      minOrder: json['minOrder'] ?? 1,
-      rating: (json['rating'] ?? 0).toDouble(),
-      reviewCount: json['reviewCount'] ?? 0,
-      reservedStock: json['reservedStock'] ?? 0,
-      material: json['material'] ?? '',
-      createdAt: createdAt,
-      updatedAt: updatedAt,
-      deletedAt: deletedAt,
+      barcode: json['Barcode'] ?? json['barcode'] ?? '',
+      dimensions: json['Dimensions'] ?? json['dimensions'] ?? '',
+      discount: parseDouble(json['Discount'] ?? json['discount']),
+      isActive: json['IsActive'] ?? json['is_active'] ?? true,
+      minOrder: json['MinOrder'] ?? json['minOrder'] ?? 1,
+      rating: parseDouble(json['Rating'] ?? json['rating']),
+      reviewCount: json['ReviewCount'] ?? json['reviewCount'] ?? 0,
+      reservedStock: json['ReservedStock'] ?? json['reservedStock'] ?? 0,
+      material: json['material']?.toString() ?? '',
+      createdAt:
+          DateTime.tryParse(json['CreatedAt'] ?? json['createdAt'] ?? '') ??
+          DateTime.now(),
+      updatedAt:
+          DateTime.tryParse(json['UpdatedAt'] ?? json['updatedAt'] ?? '') ??
+          DateTime.now(),
     );
   }
 }

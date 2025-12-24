@@ -5,6 +5,7 @@ import '../../../data/models/product.dart';
 import '../../../data/models/product_variant.dart';
 import '../../../data/providers/cart_provider.dart';
 import '../../../data/providers/liked_provider.dart';
+import '../../../data/providers/auth_provider.dart';
 import '../../../data/providers/view_history_provider.dart';
 import '../../widgets/custom_notification.dart';
 
@@ -35,6 +36,49 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         listen: false,
       ).addToHistory(widget.product);
     });
+  }
+
+  Future<void> _handleFavoriteToggle() async {
+    final auth = context.read<AuthProvider>();
+    final likedProvider = context.read<LikedProvider>();
+    final selectedVariant = widget.product.variants[_selectedVariantIndex];
+
+    if (!auth.isAuthenticated) {
+      NotificationHelper.show(
+        context,
+        message: 'auth.login_required_to_favorite'.tr(),
+        isError: true,
+      );
+      return;
+    }
+
+    final bool isCurrentlyLiked = likedProvider.isInLiked(selectedVariant.id);
+
+    try {
+      if (isCurrentlyLiked) {
+        await likedProvider.removeFromLiked(selectedVariant.id, auth.token!);
+        if (mounted) {
+          NotificationHelper.show(context, message: 'product.fav_removed'.tr());
+        }
+      } else {
+        await likedProvider.addToLiked(
+          widget.product,
+          selectedVariant,
+          auth.token!,
+        );
+        if (mounted) {
+          NotificationHelper.show(context, message: 'product.fav_added'.tr());
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        NotificationHelper.show(
+          context,
+          message: 'common.error_occurred'.tr(),
+          isError: true,
+        );
+      }
+    }
   }
 
   Color _getColorFromString(String colorName) {
@@ -249,9 +293,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
     final bool isMobile = MediaQuery.of(context).size.width < 650;
+
     final selectedVariant = widget.product.variants[_selectedVariantIndex];
+
     final likedProvider = context.watch<LikedProvider>();
-    final isLiked = likedProvider.isInLiked(widget.product, selectedVariant);
+    final isLiked = likedProvider.isInLiked(selectedVariant.id);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -296,21 +342,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   ),
                 ),
                 IconButton(
-                  onPressed: () {
-                    if (isLiked) {
-                      likedProvider.removeFromLiked(
-                        '${widget.product.id}_${selectedVariant.id}',
-                      );
-                    } else {
-                      likedProvider.addToLiked(widget.product, selectedVariant);
-                    }
-                    NotificationHelper.show(
-                      context,
-                      message: isLiked
-                          ? 'product.fav_removed'.tr()
-                          : 'product.fav_added'.tr(),
-                    );
-                  },
+                  onPressed: _handleFavoriteToggle,
                   icon: Icon(
                     isLiked ? Icons.star_rounded : Icons.star_border_rounded,
                     color: isLiked
@@ -392,8 +424,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             final color = _getColorFromString(variant.colors);
                             final isSelected = index == _selectedVariantIndex;
                             return GestureDetector(
-                              onTap: () =>
-                                  setState(() => _selectedVariantIndex = index),
+                              onTap: () => setState(() {
+                                _selectedVariantIndex = index;
+                              }),
                               child: Container(
                                 margin: const EdgeInsets.only(right: 12),
                                 padding: const EdgeInsets.all(3),

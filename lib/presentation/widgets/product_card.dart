@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../data/models/product.dart';
 import '../../data/providers/liked_provider.dart';
+import '../../data/providers/auth_provider.dart';
+import 'custom_notification.dart';
 
 class ProductCard extends StatefulWidget {
   final Product product;
@@ -43,6 +45,45 @@ class _ProductCardState extends State<ProductCard> {
         return Colors.grey;
       default:
         return Colors.black;
+    }
+  }
+
+  Future<void> _handleFavoriteToggle() async {
+    final auth = context.read<AuthProvider>();
+    final likedProvider = context.read<LikedProvider>();
+    final variant = widget.product.variants[_selectedVariantIndex];
+
+    if (!auth.isAuthenticated) {
+      NotificationHelper.show(
+        context,
+        message: 'auth.login_required_to_favorite'.tr(),
+        isError: true,
+      );
+      return;
+    }
+
+    final bool isCurrentlyLiked = likedProvider.isInLiked(variant.id);
+
+    try {
+      if (isCurrentlyLiked) {
+        await likedProvider.removeFromLiked(variant.id, auth.token!);
+        if (mounted) {
+          NotificationHelper.show(context, message: 'product.fav_removed'.tr());
+        }
+      } else {
+        await likedProvider.addToLiked(widget.product, variant, auth.token!);
+        if (mounted) {
+          NotificationHelper.show(context, message: 'product.fav_added'.tr());
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        NotificationHelper.show(
+          context,
+          message: 'common.error_occurred'.tr(),
+          isError: true,
+        );
+      }
     }
   }
 
@@ -119,21 +160,23 @@ class _ProductCardState extends State<ProductCard> {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
     final colorScheme = theme.colorScheme;
-    
+
     final likedProvider = context.watch<LikedProvider>();
 
     if (widget.product.variants.isEmpty) {
       return Card(
-        child: Center(child: Text('catalog.no_variants'.tr(), style: textTheme.bodySmall)),
+        child: Center(
+          child: Text('catalog.no_variants'.tr(), style: textTheme.bodySmall),
+        ),
       );
     }
-    
+
     final selectedVariant = widget.product.variants[_selectedVariantIndex];
     final imageUrl = selectedVariant.imageURLs.isNotEmpty
         ? selectedVariant.imageURLs.first
         : null;
 
-    final isLiked = likedProvider.isInLiked(widget.product, selectedVariant);
+    final isLiked = likedProvider.isInLiked(selectedVariant.id);
 
     return GestureDetector(
       onTap: () => widget.onProductSelected(widget.product),
@@ -163,7 +206,7 @@ class _ProductCardState extends State<ProductCard> {
                       ),
               ),
             ),
-            
+
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
               child: Column(
@@ -183,7 +226,7 @@ class _ProductCardState extends State<ProductCard> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 8),
-                  
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -199,20 +242,16 @@ class _ProductCardState extends State<ProductCard> {
                         shape: const CircleBorder(),
                         child: InkWell(
                           customBorder: const CircleBorder(),
-                          onTap: () {
-                            if (isLiked) {
-                              likedProvider.removeFromLiked(
-                                '${widget.product.id}_${selectedVariant.id}',
-                              );
-                            } else {
-                              likedProvider.addToLiked(widget.product, selectedVariant);
-                            }
-                          },
+                          onTap: _handleFavoriteToggle,
                           child: Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Icon(
-                              isLiked ? Icons.star_rounded : Icons.star_border_rounded,
-                              color: isLiked ? Colors.amber[600] : colorScheme.outline,
+                              isLiked
+                                  ? Icons.star_rounded
+                                  : Icons.star_border_rounded,
+                              color: isLiked
+                                  ? Colors.amber[600]
+                                  : colorScheme.outline,
                               size: 26,
                             ),
                           ),
@@ -223,7 +262,7 @@ class _ProductCardState extends State<ProductCard> {
                 ],
               ),
             ),
-            
+
             if (widget.product.variants.length > 1)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12.0),
