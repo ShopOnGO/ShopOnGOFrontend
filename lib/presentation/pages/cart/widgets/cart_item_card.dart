@@ -5,6 +5,8 @@ import '../../../../data/models/cart_item.dart';
 import '../../../../data/models/product.dart';
 import '../../../../data/providers/cart_provider.dart';
 import '../../../../data/providers/liked_provider.dart';
+import '../../../../data/providers/auth_provider.dart';
+import '../../../widgets/custom_notification.dart';
 
 class CartItemCard extends StatelessWidget {
   final CartItem cartItem;
@@ -21,6 +23,8 @@ class CartItemCard extends StatelessWidget {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
     final cartProvider = context.read<CartProvider>();
+    final auth = context.watch<AuthProvider>();
+    final likedProvider = context.watch<LikedProvider>();
 
     final product = cartItem.product;
     final variant = cartItem.selectedVariant;
@@ -28,8 +32,7 @@ class CartItemCard extends StatelessWidget {
         ? variant.imageURLs.first
         : null;
 
-    final likedProvider = context.watch<LikedProvider>();
-    final isLiked = likedProvider.isInLiked(product, variant);
+    final isLiked = likedProvider.isInLiked(variant.id);
 
     return InkWell(
       onTap: () => onProductSelected(product),
@@ -62,7 +65,12 @@ class CartItemCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(product.name, style: textTheme.titleMedium),
+                    Text(
+                      product.name,
+                      style: textTheme.titleMedium,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     const SizedBox(height: 2),
                     Text(
                       'cart.item_color'.tr(args: [variant.colors]),
@@ -72,10 +80,12 @@ class CartItemCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'cart.item_price'.tr(args: [
-                        variant.price.toStringAsFixed(0),
-                        'common.currency'.tr()
-                      ]),
+                      'cart.item_price'.tr(
+                        args: [
+                          variant.price.toStringAsFixed(0),
+                          'common.currency'.tr(),
+                        ],
+                      ),
                       style: textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 8),
@@ -83,14 +93,49 @@ class CartItemCard extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         IconButton(
-                          onPressed: () {
-                            final likedProvider = context.read<LikedProvider>();
-                            if (isLiked) {
-                              likedProvider.removeFromLiked(
-                                '${product.id}_${variant.id}',
+                          onPressed: () async {
+                            if (!auth.isAuthenticated) {
+                              NotificationHelper.show(
+                                context,
+                                message: 'auth.login_required_to_favorite'.tr(),
+                                isError: true,
                               );
-                            } else {
-                              likedProvider.addToLiked(product, variant);
+                              return;
+                            }
+
+                            try {
+                              if (isLiked) {
+                                await likedProvider.removeFromLiked(
+                                  variant.id,
+                                  auth.token!,
+                                );
+                                if (context.mounted) {
+                                  NotificationHelper.show(
+                                    context,
+                                    message: 'product.fav_removed'.tr(),
+                                  );
+                                }
+                              } else {
+                                await likedProvider.addToLiked(
+                                  product,
+                                  variant,
+                                  auth.token!,
+                                );
+                                if (context.mounted) {
+                                  NotificationHelper.show(
+                                    context,
+                                    message: 'product.fav_added'.tr(),
+                                  );
+                                }
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                NotificationHelper.show(
+                                  context,
+                                  message: 'common.error_occurred'.tr(),
+                                  isError: true,
+                                );
+                              }
                             }
                           },
                           icon: Icon(
@@ -106,8 +151,14 @@ class CartItemCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 16),
                         IconButton(
-                          onPressed: () =>
-                              cartProvider.removeFromCart(cartItem.id),
+                          onPressed: () {
+                            if (auth.isAuthenticated) {
+                              cartProvider.removeFromCart(
+                                cartItem.id,
+                                auth.token!,
+                              );
+                            }
+                          },
                           icon: const Icon(Icons.delete_outline),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
@@ -126,14 +177,26 @@ class CartItemCard extends StatelessWidget {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.remove),
-                      onPressed: () =>
-                          cartProvider.decrementQuantity(cartItem.id),
+                      onPressed: () {
+                        if (auth.isAuthenticated) {
+                          cartProvider.decrementQuantity(
+                            cartItem.id,
+                            auth.token!,
+                          );
+                        }
+                      },
                     ),
                     Text('${cartItem.quantity}', style: textTheme.titleMedium),
                     IconButton(
                       icon: const Icon(Icons.add),
-                      onPressed: () =>
-                          cartProvider.incrementQuantity(cartItem.id),
+                      onPressed: () {
+                        if (auth.isAuthenticated) {
+                          cartProvider.incrementQuantity(
+                            cartItem.id,
+                            auth.token!,
+                          );
+                        }
+                      },
                     ),
                   ],
                 ),

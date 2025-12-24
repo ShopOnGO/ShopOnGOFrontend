@@ -112,6 +112,21 @@ class ProductService {
     }
   }
 
+  Future<Product?> fetchProductById(int id) async {
+    final url = Uri.parse('${ApiConfig.productsEndpoint}$id');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        return Product.fromJson(data);
+      }
+      return null;
+    } catch (e) {
+      logger.e('ProductService: Error fetching product $id', error: e);
+      return null;
+    }
+  }
+
   Future<List<Product>> fetchProducts() async {
     await _ensureBrandsLoaded();
     final rawList = await _performSearchQuery();

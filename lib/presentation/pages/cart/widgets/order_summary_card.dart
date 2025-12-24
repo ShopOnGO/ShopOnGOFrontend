@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
+import '../../../../data/providers/cart_provider.dart';
+import '../../../../data/providers/auth_provider.dart';
 
 class OrderSummaryCard extends StatefulWidget {
   final double totalAmount;
@@ -20,15 +23,27 @@ class _OrderSummaryCardState extends State<OrderSummaryCard> {
     super.dispose();
   }
 
-  void _validateAndSubmit() {
+  void _validateAndSubmit() async {
+    final auth = context.read<AuthProvider>();
+    final cart = context.read<CartProvider>();
+
+    if (widget.totalAmount <= 0) return;
+
     if (_textController.text.trim().isEmpty) {
       setState(() {
         _errorMessage = 'cart.validation_error'.tr();
       });
-    } else {
-      setState(() {
-        _errorMessage = null;
-      });
+      return;
+    }
+
+    setState(() {
+      _errorMessage = null;
+    });
+
+    if (auth.isAuthenticated) {
+      await cart.clearCart(auth.token!);
+
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -41,6 +56,7 @@ class _OrderSummaryCardState extends State<OrderSummaryCard> {
           ),
         ),
       );
+      _textController.clear();
     }
   }
 
@@ -72,10 +88,12 @@ class _OrderSummaryCardState extends State<OrderSummaryCard> {
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
                 child: Center(
                   child: Text(
-                    'cart.total'.tr(args: [
-                      widget.totalAmount.toStringAsFixed(0),
-                      'common.currency'.tr()
-                    ]),
+                    'cart.total'.tr(
+                      args: [
+                        widget.totalAmount.toStringAsFixed(0),
+                        'common.currency'.tr(),
+                      ],
+                    ),
                     style: textTheme.headlineSmall,
                   ),
                 ),
@@ -104,11 +122,8 @@ class _OrderSummaryCardState extends State<OrderSummaryCard> {
               ),
 
               const SizedBox(height: 8),
-              AnimatedOpacity(
-                opacity: _errorMessage != null ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-                child: Container(
+              if (_errorMessage != null)
+                Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
                     vertical: 10,
@@ -127,7 +142,7 @@ class _OrderSummaryCardState extends State<OrderSummaryCard> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          _errorMessage ?? '',
+                          _errorMessage!,
                           style: TextStyle(
                             color: theme.colorScheme.onError,
                             fontSize: 13,
@@ -137,11 +152,10 @@ class _OrderSummaryCardState extends State<OrderSummaryCard> {
                     ],
                   ),
                 ),
-              ),
 
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: _validateAndSubmit,
+                onPressed: widget.totalAmount > 0 ? _validateAndSubmit : null,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   backgroundColor: theme.colorScheme.primary,
@@ -150,7 +164,10 @@ class _OrderSummaryCardState extends State<OrderSummaryCard> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: Text("cart.checkout_btn".tr(), style: textTheme.titleMedium),
+                child: Text(
+                  "cart.checkout_btn".tr(),
+                  style: textTheme.titleMedium,
+                ),
               ),
             ],
           ),

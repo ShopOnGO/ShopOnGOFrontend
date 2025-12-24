@@ -5,28 +5,13 @@ import 'package:tailornado/data/models/brand.dart';
 import 'package:tailornado/data/models/category.dart';
 
 Product createFakeProduct(int id) {
-  final dummyBrand = Brand(
-    id: 1,
-    name: 'Brand',
-    description: '',
-    logo: '',
-    videoUrl: '',
-  );
-
-  final dummyCategory = Category(
-    id: 1,
-    name: 'Category',
-    description: '',
-    imageUrl: '',
-  );
-
   return Product(
     id: id,
     name: 'Product $id',
     description: '',
     imageURLs: [],
-    brand: dummyBrand,
-    category: dummyCategory,
+    brand: Brand(id: 1, name: 'Brand', description: '', logo: '', videoUrl: ''),
+    category: Category(id: 1, name: 'Category', description: '', imageUrl: ''),
     variants: [],
     isActive: true,
     videoURLs: [],
@@ -45,25 +30,20 @@ void main() {
       }
 
       expect(history.viewedProducts.length, 20);
-
       expect(history.viewedProducts.first.id, 25);
-
       expect(history.viewedProducts.any((p) => p.id == 1), false);
     });
 
     test('Повторный просмотр товара перемещает его в начало списка', () {
       final history = ViewHistoryProvider();
-
       final p1 = createFakeProduct(1);
       final p2 = createFakeProduct(2);
 
       history.addToHistory(p1);
       history.addToHistory(p2);
-
       expect(history.viewedProducts.first.id, 2);
 
       history.addToHistory(p1);
-
       expect(history.viewedProducts.first.id, 1);
       expect(history.viewedProducts.length, 2);
     });

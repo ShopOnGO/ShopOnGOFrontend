@@ -7,11 +7,10 @@ import 'package:tailornado/data/providers/cart_provider.dart';
 import 'package:tailornado/data/providers/liked_provider.dart';
 import 'package:tailornado/data/providers/chat_provider.dart';
 import 'package:tailornado/data/providers/view_history_provider.dart';
+import 'package:tailornado/data/providers/product_provider.dart';
 
 void main() {
-  testWidgets('DashboardPage отображает название приложения', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('DashboardPage отображает название приложения', (WidgetTester tester) async {
     await tester.pumpWidget(
       MultiProvider(
         providers: [
@@ -20,13 +19,17 @@ void main() {
           ChangeNotifierProvider(create: (_) => LikedProvider()),
           ChangeNotifierProvider(create: (_) => ChatProvider()),
           ChangeNotifierProvider(create: (_) => ViewHistoryProvider()),
+          ChangeNotifierProvider(create: (_) => ProductProvider()),
         ],
-        child: MaterialApp(home: DashboardPage(toggleTheme: () {})),
+        child: MaterialApp(
+          home: DashboardPage(toggleTheme: () {}),
+        ),
       ),
     );
 
-    expect(find.text('Tailornado'), findsOneWidget);
+    await tester.pumpAndSettle();
 
+    expect(find.text('Tailornado'), findsOneWidget);
     expect(find.byIcon(Icons.brightness_6), findsOneWidget);
   });
 }

@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
-import '../../../data/models/product.dart';
-import '../../../data/models/brand.dart';
-import '../../../data/services/product_service.dart';
-import '../../../core/utils/app_logger.dart';
+import '../../../data/providers/product_provider.dart';
 import '../../widgets/filter_panel.dart';
 import '../../widgets/product_grid.dart';
 import '../../widgets/search_bar.dart';
+import '../../../data/models/product.dart';
 
 class MainPage extends StatefulWidget {
   final TextEditingController searchController;
@@ -30,15 +29,10 @@ class MainPage extends StatefulWidget {
   State<MainPage> createState() => _MainPageState();
 }
 
-class _MainPageState extends State<MainPage> with SingleTickerProviderStateMixin {
+class _MainPageState extends State<MainPage>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   bool _isFilterPanelVisible = false;
-
-  final ProductService _productService = ProductService();
-  List<Product> _products = [];
-  List<Brand> _brands = [];
-  bool _isLoading = true;
-  double _maxPriceLimit = 1000;
 
   @override
   void initState() {
@@ -47,7 +41,10 @@ class _MainPageState extends State<MainPage> with SingleTickerProviderStateMixin
       vsync: this,
       duration: const Duration(milliseconds: 250),
     );
-    _loadData();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProductProvider>().loadProducts();
+    });
   }
 
   @override
@@ -56,43 +53,11 @@ class _MainPageState extends State<MainPage> with SingleTickerProviderStateMixin
     super.dispose();
   }
 
-  Future<void> _loadData() async {
-    setState(() => _isLoading = true);
-    try {
-      final results = await Future.wait([
-        _productService.fetchProducts(),
-        _productService.getAllBrands(),
-      ]);
-
-      if (mounted) {
-        final products = results[0] as List<Product>;
-        
-        double maxFound = 0;
-        for (var p in products) {
-          for (var v in p.variants) {
-            if (v.price > maxFound) maxFound = v.price;
-          }
-        }
-
-        setState(() {
-          _products = products;
-          _brands = results[1] as List<Brand>;
-          _maxPriceLimit = maxFound > 0 ? maxFound : 1000;
-          _isLoading = false;
-        });
-        logger.d("MainPage: Data loaded. Max price: $_maxPriceLimit");
-      }
-    } catch (e, stackTrace) {
-      logger.e("MainPage: Error loading initial data", error: e, stackTrace: stackTrace);
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
   void _toggleFilterPanel() {
     final bool isMobile = MediaQuery.of(context).size.width < 650;
+    final productProvider = context.read<ProductProvider>();
 
     if (isMobile) {
-      logger.i('MainPage: Opening mobile filter sheet');
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
@@ -101,8 +66,8 @@ class _MainPageState extends State<MainPage> with SingleTickerProviderStateMixin
           borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
         ),
         builder: (context) => FilterPanel(
-          brands: _brands,
-          maxLimit: _maxPriceLimit,
+          brands: productProvider.brands,
+          maxLimit: productProvider.maxPrice,
           onApply: _handleFilterApply,
           isMobile: true,
         ),
@@ -120,14 +85,11 @@ class _MainPageState extends State<MainPage> with SingleTickerProviderStateMixin
   }
 
   void _handleFilterApply(RangeValues range, int? brandId) {
-    logger.i("MainPage: Applying global filters");
-    
     if (MediaQuery.of(context).size.width < 650) {
       Navigator.pop(context);
     } else {
       _toggleFilterPanel();
     }
-    
     widget.onApplyFilters?.call(range, brandId);
   }
 
@@ -137,10 +99,17 @@ class _MainPageState extends State<MainPage> with SingleTickerProviderStateMixin
     const double searchBarHeight = 50.0;
     final double horizontalPadding = isMobile ? 16.0 : 45.0;
 
+    final productProvider = context.watch<ProductProvider>();
+
     return Column(
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(horizontalPadding, 5, horizontalPadding, 0),
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            5,
+            horizontalPadding,
+            0,
+          ),
           child: Stack(
             children: [
               if (!isMobile)
@@ -152,8 +121,8 @@ class _MainPageState extends State<MainPage> with SingleTickerProviderStateMixin
                       curve: Curves.fastOutSlowIn,
                     ),
                     child: FilterPanel(
-                      brands: _brands,
-                      maxLimit: _maxPriceLimit,
+                      brands: productProvider.brands,
+                      maxLimit: productProvider.maxPrice,
                       onApply: _handleFilterApply,
                     ),
                   ),
@@ -173,12 +142,18 @@ class _MainPageState extends State<MainPage> with SingleTickerProviderStateMixin
         Expanded(
           child: Padding(
             padding: EdgeInsets.only(top: isMobile ? 15 : 30),
-            child: _isLoading 
+            child: productProvider.isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : ProductGrid(
-                    products: _products,
-                    onProductSelected: widget.onProductSelected,
-                    padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 20),
+                : RefreshIndicator(
+                    onRefresh: () => productProvider.loadProducts(force: true),
+                    child: ProductGrid(
+                      products: productProvider.products,
+                      onProductSelected: widget.onProductSelected,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: horizontalPadding,
+                        vertical: 20,
+                      ),
+                    ),
                   ),
           ),
         ),

@@ -2,12 +2,12 @@ import 'product.dart';
 import 'product_variant.dart';
 
 class LikedItem {
-  final String id;
+  final int favEntryId;
   final Product product;
   final ProductVariant selectedVariant;
 
   LikedItem({
-    required this.id,
+    required this.favEntryId,
     required this.product,
     required this.selectedVariant,
   });

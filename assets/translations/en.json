@@ -21,7 +21,8 @@
     "apply": "Apply"
   },
   "common": {
-    "currency": "BYN"
+    "currency": "BYN",
+    "ok": "OK"
   },
   "catalog": {
     "loading": "Loading data...",
@@ -46,7 +47,14 @@
     "notes_hint": "Notes...",
     "validation_error": "Please fill this field",
     "order_success": "Order placed successfully",
-    "checkout_btn": "CHECKOUT"
+    "checkout_btn": "CHECKOUT",
+    "err_no_auth": "Please login to use the cart",
+    "err_load": "Failed to load cart",
+    "err_add": "Failed to add item",
+    "err_update": "Failed to update quantity",
+    "err_delete": "Failed to remove item",
+    "clear_all": "Clear All",
+    "clear_confirm": "Are you sure you want to remove all items from the cart?"
   },
   "auth": {
     "login_title": "Login",
@@ -67,7 +75,8 @@
     "err_email_empty": "Enter Email",
     "err_email_invalid": "Invalid Email format",
     "err_pass_empty": "Enter password",
-    "err_pass_short": "At least 6 characters"
+    "err_pass_short": "At least 6 characters",
+    "login_required_to_favorite": "Please log in to add products to your favorites"
   },
   "profile": {
     "unauth_msg": "Log in to see your profile",
