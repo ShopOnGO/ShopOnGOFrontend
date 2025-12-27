@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  frontend:
+    container_name: shop_on_go_frontend
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    networks:
+      - shopongo_default
+
+networks:
+  shopongo_default:
+    external: true
